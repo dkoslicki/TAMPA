@@ -176,7 +176,16 @@ def open_profile_from_tsv(file_path, normalize):
     if normalize:
         normalize_samples(samples_list)
 
-    return samples_list
+    sample_dict = dict()
+    for profile in samples_list:
+        sample_name = profile[0]
+        sample_meta_data = profile[1]
+        sample_predictions = profile[2]
+        sample_dict[sample_name] = dict()
+        sample_dict[sample_name]['meta_data'] = sample_meta_data
+        sample_dict[sample_name]['predictions'] = sample_predictions
+
+    return sample_dict
 
 
 def open_profile(file_path, normalize):
