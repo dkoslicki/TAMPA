@@ -77,11 +77,11 @@ class ProfilesLayout:
             size_ground_truth = np.log(self.ground_truth_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
         else:
             size_ground_truth = eps
-        size = 50*max([size_ground_truth, size_profile])
+        size = 75*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
-            F2 = TextFace(node.sci_name, tight_text=True, fsize=24)  # use the scientific name
+            F2 = TextFace(node.sci_name, tight_text=True, fsize=48)  # use the scientific name
             faces.add_face_to_node(F2, node, column=0, position="branch-right")
             F = faces.PieChartFace(chart_sizes,
                                    colors=['#1b9e77', '#d95f02'],

@@ -34,16 +34,43 @@ def main():
     ts.min_leaf_separation = 10
     #ts.legend.add_face(CircleFace(100, "#1b9e77", label="Predicted"), column=0)
     #ts.legend.add_face(CircleFace(100, '#d95f02', label="True"), column=1)
-    ts.legend.add_face(CircleFace(500, "#1b9e77"), column=0)
-    ts.legend.add_face(TextFace("Predicted", fsize=124), column=0)
-    ts.legend.add_face(CircleFace(500, "#d95f02"), column=1)
-    ts.legend.add_face(TextFace("True", fsize=124), column=1)
-    T = TextFace(f"{os.path.basename(input_file).split('.')[0]}", fsize=124)
-    T.hz_align = True
-    ts.legend.add_face(T, column=0)
-    ts.optimal_scale_level = 'full'
+    # add white space to move the legend closer
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=0)
+
+    # add the legend
+    legend_fs = 128
+    C1 = CircleFace(200, "#1b9e77")
+    C1.hz_align = True
+    ts.legend.add_face(C1, column=0)
+    T1 = TextFace("Predicted", fsize=legend_fs)
+    T1.hz_align = True
+    ts.legend.add_face(T1, column=0)
+    C2 = CircleFace(200, "#d95f02")
+    C2.hz_align = True
+    ts.legend.add_face(C2, column=1)
+    T2 = TextFace("True", fsize=legend_fs)
+    T2.hz_align = True
+    ts.legend.add_face(T2, column=1)
+    T3 = TextFace(f"Tool: {os.path.basename(input_file).split('.')[0]}", fsize=legend_fs)
+    T3.hz_align = True
+    ts.legend.add_face(T3, column=0)
+    ts.allow_face_overlap = True  # this lets me mess a bit with font size and face size without the interaction of the two
+    ts.min_leaf_separation = 10
+    #ts.margin_left = 0
+    #ts.margin_right = 0
+    #ts.margin_top = 0
+    #ts.margin_bottom = -500
+    #ts.title.add_face(T, column=0)
+    #ts.show_scale = True
+    #ts.optimal_scale_level = 'full'
     #tree.show(tree_style=ts)
-    tree.render(output_file, h=5, w=5, tree_style=ts, units="in")
+    #tree.render(output_file, h=5, w=5, tree_style=ts, units="in")
+    tree.render(output_file, h=5, w=5, tree_style=ts, units="in", dpi=800)
     #tree.render('out.svg', tree_style=ts)
 
 
