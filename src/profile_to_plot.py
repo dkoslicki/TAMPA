@@ -19,11 +19,12 @@ ts.show_leaf_name = False
 ts.min_leaf_separation = 15
 #ts.legend.add_face(CircleFace(100, "#1b9e77", label="Predicted"), column=0)
 #ts.legend.add_face(CircleFace(100, '#d95f02', label="True"), column=1)
-ts.legend.add_face(CircleFace(100, "#1b9e77"), column=0)
-ts.legend.add_face(TextFace("Predicted", fsize=48), column=0)
-ts.legend.add_face(CircleFace(100, "#d95f02"), column=1)
-ts.legend.add_face(TextFace("True", fsize=48), column=1)
-tree.show(tree_style=ts)
+ts.legend.add_face(CircleFace(500, "#1b9e77"), column=0)
+ts.legend.add_face(TextFace("Predicted", fsize=124), column=0)
+ts.legend.add_face(CircleFace(500, "#d95f02"), column=1)
+ts.legend.add_face(TextFace("True", fsize=124), column=1)
+#tree.show(tree_style=ts)
+tree.render('out.svg', tree_style=ts, h=5, w=5, units="in")
 
 
 
