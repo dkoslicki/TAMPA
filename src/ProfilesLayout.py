@@ -1,5 +1,5 @@
 import load_data
-from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES
+from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, TextFace
 import numpy as np
 
 schema_names = COLOR_SCHEMES.keys()
@@ -44,15 +44,18 @@ class ProfilesLayout:
         for prediction in predictions:
             tax_id = prediction.taxid
             percentage = prediction.percentage
-            tax_id_to_percentage[tax_id] = percentage
+            tax_id_to_percentage[tax_id] = 100*percentage  # TODO: so they are fractions, not probabilities
         return tax_id_to_percentage
 
     def make_tax_id_to_percentage(self):
         self.profile_tax_id_to_percentage = dict()
         self.ground_truth_tax_id_to_percentage = dict()
         if self.sample_of_interest:
+            # populate for the profile
             predictions = self.profile_dict[self.sample_of_interest]['predictions']
             self.profile_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
+
+            # populate for the ground truth
             predictions = self.ground_truth_dict[self.sample_of_interest]['predictions']
             self.ground_truth_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
         else:  # otherwise, take the average
@@ -63,24 +66,27 @@ class ProfilesLayout:
             #        if key in self.profile_tax_id_to_percentage
 
     def layout(self, node):
-        if not node.is_leaf():
-            node_taxid = str(node.taxid)
-            size = 0
-            if node_taxid in self.profile_tax_id_to_percentage:
-                size_profile = self.profile_tax_id_to_percentage[node_taxid]
-            else:
-                size_profile = 0
-            if node_taxid in self.ground_truth_tax_id_to_percentage:
-                size_ground_truth = self.ground_truth_tax_id_to_percentage[node_taxid]
-            else:
-                size_ground_truth = 0
-            size = size_profile + size_ground_truth
-            chart_sizes = np.array([size_profile, size_ground_truth])
-            chart_sizes = chart_sizes/np.sum(chart_sizes)
-
-            F = faces.PieChartFace(chart_sizes,  # TODO: populate these with the prediction probabilities
-                                   colors=COLOR_SCHEMES['brbg'],
+        #if not node.is_leaf():
+        eps = .000000001
+        node_taxid = str(node.taxid)
+        if node_taxid in self.profile_tax_id_to_percentage:
+            size_profile = np.log(self.profile_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
+        else:
+            size_profile = eps
+        if node_taxid in self.ground_truth_tax_id_to_percentage:
+            size_ground_truth = np.log(self.ground_truth_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
+        else:
+            size_ground_truth = eps
+        size = 50*max([size_ground_truth, size_profile])
+        chart_sizes = np.array([size_profile, size_ground_truth])
+        if not np.sum(chart_sizes) == 0:
+            chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
+            F = faces.PieChartFace(chart_sizes,
+                                   colors=['#1b9e77', '#d95f02'],
                                    width=size, height=size)
+
             F.border.width = None
             F.opacity = 0.6
-            faces.add_face_to_node(F, node, 0, position="float")
+            faces.add_face_to_node(F, node, 0, position="float-behind")
+            F2 = TextFace(node.sci_name, tight_text=True, fsize=24)  # use the scientific name
+            faces.add_face_to_node(F2, node, column=0, position="branch-right")
