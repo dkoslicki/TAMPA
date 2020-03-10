@@ -81,6 +81,8 @@ class ProfilesLayout:
         chart_sizes = np.array([size_profile, size_ground_truth])
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
+            F2 = TextFace(node.sci_name, tight_text=True, fsize=24)  # use the scientific name
+            faces.add_face_to_node(F2, node, column=0, position="branch-right")
             F = faces.PieChartFace(chart_sizes,
                                    colors=['#1b9e77', '#d95f02'],
                                    width=size, height=size)
@@ -88,5 +90,3 @@ class ProfilesLayout:
             F.border.width = None
             F.opacity = 0.6
             faces.add_face_to_node(F, node, 0, position="float-behind")
-            F2 = TextFace(node.sci_name, tight_text=True, fsize=24)  # use the scientific name
-            faces.add_face_to_node(F2, node, column=0, position="branch-right")
