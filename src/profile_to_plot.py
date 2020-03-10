@@ -2,17 +2,25 @@ from ete3 import NCBITaxa
 from ProfilesLayout import ProfilesLayout
 from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace
 import argparse
-import os, sys
+import os
+import seaborn
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 ncbi = NCBITaxa()
 
 def main():
     argparser = argparse.ArgumentParser(description='Plot abundance of profile against ground truth on taxonomic tree.')
-    argparser.add_argument('-i', '--input_profile', type=str, help='Input taxonoomic profile')
+    argparser.add_argument('-i', '--input_profile', type=str, help='Input taxonomic profile')
     argparser.add_argument('-g', '--ground_truth_input_profile', type=str, help='Input ground truth taxonoomic profile')
-    argparser.add_argument('-o', '--output_file', type=str, help='File for output (.svg, png, pdf, etc.')
+    argparser.add_argument('-b', '--output_base_name', type=str, help='Base name for output')
+    argparser.add_argument('-t', '--file_type', type=str, default='png', help="File type for output images (svg, png, pdf, etc.")
     argparser.add_argument('-s', '--sample_of_interest', type=str, help="If you're only interested in a single sample of interest, specify here.")
+    argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
+
+    # Parse the parameters
     params = argparser.parse_args()
     rank = params.taxonomic_rank
     #input_file = "/home/dkoslicki/Data/CAMI2/meta_coder_analysis/profiles/marine_short/MS15.profile"
@@ -21,10 +29,14 @@ def main():
     ground_truth = params.ground_truth_input_profile
     #sample_of_interest = 'marmgCAMI2_short_read_sample_0'
     sample_of_interest = params.sample_of_interest
-    output_file = params.output_file
+    output_base_name = params.output_base_name
+    plot_l1 = params.plot_l1
+    file_type = params.file_type
 
+    # ingest the profiles information
     PF = ProfilesLayout(input_file, ground_truth, sample_of_interest=sample_of_interest, normalize=True)
 
+    # Make the ETE3 tree
     tree = ncbi.get_topology(PF.get_all_tax_ids(), rank_limit=rank)
     ts = TreeStyle()
     PF.make_tax_id_to_percentage()
@@ -61,19 +73,48 @@ def main():
     ts.legend.add_face(T3, column=0)
     ts.allow_face_overlap = True  # this lets me mess a bit with font size and face size without the interaction of the two
     ts.min_leaf_separation = 10
-    #ts.margin_left = 0
-    #ts.margin_right = 0
-    #ts.margin_top = 0
-    #ts.margin_bottom = -500
-    #ts.title.add_face(T, column=0)
-    #ts.show_scale = True
-    #ts.optimal_scale_level = 'full'
-    #tree.show(tree_style=ts)
-    #tree.render(output_file, h=5, w=5, tree_style=ts, units="in")
-    tree.render(output_file, h=5, w=5, tree_style=ts, units="in", dpi=800)
+    tree_output_file = f"{output_base_name}_tree_{rank}.{file_type}"
+    tree.render(tree_output_file, h=5, w=5, tree_style=ts, units="in", dpi=800)
     #tree.render('out.svg', tree_style=ts)
 
+    # if you asked for L1 too, then plot that
+    if plot_l1:
+        true_abundance_at_rank = []
+        predicted_abundance_at_rank = []
+        for node in tree.get_leaves():
+            if node.rank == rank:
+                tax_id = str(node.taxid)
+                if tax_id in PF.ground_truth_tax_id_to_percentage:
+                    true_abundance_at_rank.append(PF.ground_truth_tax_id_to_percentage[str(node.taxid)] / 100.)
+                else:
+                    true_abundance_at_rank.append(0)
+                if tax_id in PF.profile_tax_id_to_percentage:
+                    predicted_abundance_at_rank.append(PF.profile_tax_id_to_percentage[str(node.taxid)] / 100.)
+                else:
+                    predicted_abundance_at_rank.append(0)
 
+        data = np.zeros((len(true_abundance_at_rank), 2))
+        data[:, 0] = np.array(true_abundance_at_rank)
+        data[:, 1] = np.array(predicted_abundance_at_rank)
+        df = pd.DataFrame(data, columns=['True', 'Predicted'])
+        # g = seaborn.FacetGrid(df, height=6)
+        ax = seaborn.scatterplot(x='True', y='Predicted', data=df, color='b', s=55)
+        eps = 1
+        ax.set_aspect('equal')
+        max_val = np.max(data) + eps
+        ax.set_xlim(-.5, max_val)
+        ax.set_ylim(-.5, max_val)
+        ax.set_xbound(-.5, max_val)
+        ax.set_ybound(-.5, max_val)
+        plt.plot(np.linspace(0, max_val, 100), np.linspace(0, max_val, 100), color='k')
+        for (x, y) in zip(true_abundance_at_rank, predicted_abundance_at_rank):
+            if x > y:
+                ax.vlines(x, y, x, colors='r')
+            if y > x:
+                ax.vlines(x, x, y, colors='r')
+        plt.title(f"Tool: {os.path.basename(input_file).split('.')[0]}")
+        l1_out_file = f"{output_base_name}_L1_{rank}.{file_type}"
+        plt.savefig(l1_out_file, dpi=800)
 
 
 if __name__ == "__main__": main()
