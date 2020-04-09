@@ -15,3 +15,5 @@ conda activate CAMIViz
 ```bash
 python src/profile_to_plot.py -i data/prediction_multi.profile -g data/ground_truth_multi.profile -b test -s sample_0 genus
 ```
+This should result in a plot that looks like:
+![](data/test_tree_genus.png)
