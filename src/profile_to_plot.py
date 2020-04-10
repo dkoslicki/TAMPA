@@ -3,6 +3,7 @@ from ProfilesLayout import ProfilesLayout
 from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace
 import argparse
 import os
+os.environ['QT_QPA_PLATFORM']='offscreen'
 import seaborn
 import pandas as pd
 import numpy as np
