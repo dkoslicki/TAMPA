@@ -8,12 +8,14 @@ schema_names = COLOR_SCHEMES.keys()
 class ProfilesLayout:
     def __init__(self, profile_file, ground_truth_file, sample_of_interest=None, normalize=False):
         self.profile_dict = load_data.open_profile_from_tsv(profile_file, normalize=normalize)
-        self.ground_truth_dict = load_data.open_profile_from_tsv(ground_truth_file, normalize=normalize)
+        self.ground_truth_dict = dict()
+        if ground_truth_file is not None:
+            self.ground_truth_dict = load_data.open_profile_from_tsv(ground_truth_file, normalize=normalize)
         self.sample_of_interest = sample_of_interest
 
     def get_tax_ids(self, prfl_dict):
         all_taxids = set()
-        if self.sample_of_interest:
+        if self.sample_of_interest in prfl_dict.keys():
             predictions = prfl_dict[self.sample_of_interest]['predictions']
             for prediction in predictions:
                 tax_id = prediction.taxid
@@ -56,8 +58,9 @@ class ProfilesLayout:
             self.profile_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
 
             # populate for the ground truth
-            predictions = self.ground_truth_dict[self.sample_of_interest]['predictions']
-            self.ground_truth_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
+            if self.sample_of_interest in self.ground_truth_dict.keys():
+                predictions = self.ground_truth_dict[self.sample_of_interest]['predictions']
+                self.ground_truth_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
         else:  # otherwise, take the average
             pass  # FIXME: do this later, since I will need to keep track of how many are added to get the mean
             #for sample in self.profile_dict.keys():

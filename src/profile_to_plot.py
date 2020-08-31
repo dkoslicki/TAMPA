@@ -65,12 +65,15 @@ def main():
     T1 = TextFace("Predicted", fsize=legend_fs)
     T1.hz_align = True
     ts.legend.add_face(T1, column=0)
-    C2 = CircleFace(200, "#d95f02")
-    C2.hz_align = True
-    ts.legend.add_face(C2, column=1)
-    T2 = TextFace("True", fsize=legend_fs)
-    T2.hz_align = True
-    ts.legend.add_face(T2, column=1)
+
+    if ground_truth:
+        C2 = CircleFace(200, "#d95f02")
+        C2.hz_align = True
+        ts.legend.add_face(C2, column=1)
+        T2 = TextFace("True", fsize=legend_fs)
+        T2.hz_align = True
+        ts.legend.add_face(T2, column=1)
+
     T3 = TextFace(f"Tool: {os.path.basename(input_file).split('.')[0]}", fsize=legend_fs)
     T3.hz_align = True
     ts.legend.add_face(T3, column=0)
@@ -99,6 +102,7 @@ def main():
         data = np.zeros((len(true_abundance_at_rank), 2))
         data[:, 0] = np.array(true_abundance_at_rank)
         data[:, 1] = np.array(predicted_abundance_at_rank)
+
         df = pd.DataFrame(data, columns=['True', 'Predicted'])
         # g = seaborn.FacetGrid(df, height=6)
         ax = seaborn.scatterplot(x='True', y='Predicted', data=df, color='b', s=55)
