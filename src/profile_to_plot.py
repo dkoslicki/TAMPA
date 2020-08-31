@@ -19,6 +19,7 @@ def main():
     argparser.add_argument('-t', '--file_type', type=str, default='png', help="File type for output images (svg, png, pdf, etc.")
     argparser.add_argument('-s', '--sample_of_interest', type=str, help="If you're only interested in a single sample of interest, specify here.")
     argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
+    argparser.add_argument("-n", "--normalize", help="specify this option if you want to normalize the node weights/relative abundances so that they sum to one", dest="normalize", action="store_true")
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
 
     # Parse the parameters
@@ -33,9 +34,10 @@ def main():
     output_base_name = params.output_base_name
     plot_l1 = params.plot_l1
     file_type = params.file_type
+    normalize = params.normalize
 
     # ingest the profiles information
-    PF = ProfilesLayout(input_file, ground_truth, sample_of_interest=sample_of_interest, normalize=True)
+    PF = ProfilesLayout(input_file, ground_truth, sample_of_interest=sample_of_interest, normalize=normalize)
 
     # Make the ETE3 tree
     tree = ncbi.get_topology(PF.get_all_tax_ids(), rank_limit=rank)
