@@ -11,38 +11,11 @@ import matplotlib.pyplot as plt
 
 ncbi = NCBITaxa()
 
-def main():
-    argparser = argparse.ArgumentParser(description='Plot abundance of profile against ground truth on taxonomic tree.')
-    argparser.add_argument('-i', '--input_profile', type=str, help='Input taxonomic profile')
-    argparser.add_argument('-g', '--ground_truth_input_profile', type=str, help='Input ground truth taxonoomic profile')
-    argparser.add_argument('-b', '--output_base_name', type=str, help='Base name for output')
-    argparser.add_argument('-t', '--file_type', type=str, default='png', help="File type for output images (svg, png, pdf, etc.")
-    argparser.add_argument('-s', '--sample_of_interest', type=str, help="If you're only interested in a single sample of interest, specify here.")
-    argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
-    argparser.add_argument("-n", "--normalize", help="specify this option if you want to normalize the node weights/relative abundances so that they sum to one", dest="normalize", action="store_true")
-    argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
 
-    # Parse the parameters
-    params = argparser.parse_args()
-    rank = params.taxonomic_rank
-    #input_file = "/home/dkoslicki/Data/CAMI2/meta_coder_analysis/profiles/marine_short/MS15.profile"
-    input_file = params.input_profile
-    #ground_truth = "/home/dkoslicki/Data/CAMI2/meta_coder_analysis/profiles/marine_short/gs_marine_short.profile"
-    ground_truth = params.ground_truth_input_profile
-    #sample_of_interest = 'marmgCAMI2_short_read_sample_0'
-    sample_of_interest = params.sample_of_interest
-    output_base_name = params.output_base_name
-    plot_l1 = params.plot_l1
-    file_type = params.file_type
-    normalize = params.normalize
-
-    # ingest the profiles information
-    PF = ProfilesLayout(input_file, ground_truth, sample_of_interest=sample_of_interest, normalize=normalize)
-
+def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1):
     # Make the ETE3 tree
-    tree = ncbi.get_topology(PF.get_all_tax_ids(), rank_limit=rank)
+    tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
     ts = TreeStyle()
-    PF.make_tax_id_to_percentage()
     ts.layout_fn = PF.layout
     ts.mode = "c"
     ts.show_leaf_name = False
@@ -66,7 +39,7 @@ def main():
     T1.hz_align = True
     ts.legend.add_face(T1, column=0)
 
-    if ground_truth:
+    if len(PF.ground_truth_dict) > 0:
         C2 = CircleFace(200, "#d95f02")
         C2.hz_align = True
         ts.legend.add_face(C2, column=1)
@@ -79,12 +52,13 @@ def main():
     ts.legend.add_face(T3, column=0)
     ts.allow_face_overlap = True  # this lets me mess a bit with font size and face size without the interaction of the two
     ts.min_leaf_separation = 10
-    tree_output_file = f"{output_base_name}_tree_{rank}.{file_type}"
+    tree_output_file = f"{output_base_name}_tree_{rank}_{sample}.{file_type}"
     tree.render(tree_output_file, h=5, w=5, tree_style=ts, units="in", dpi=800)
     #tree.render('out.svg', tree_style=ts)
 
-    # if you asked for L1 too, then plot that
     if plot_l1:
+
+        # if you asked for L1 too, then plot that
         true_abundance_at_rank = []
         predicted_abundance_at_rank = []
         for node in tree.get_leaves():
@@ -122,6 +96,50 @@ def main():
         plt.title(f"Tool: {os.path.basename(input_file).split('.')[0]}")
         l1_out_file = f"{output_base_name}_L1_{rank}.{file_type}"
         plt.savefig(l1_out_file, dpi=800)
+
+
+def main():
+    argparser = argparse.ArgumentParser(description='Plot abundance of profile against ground truth on taxonomic tree.')
+    argparser.add_argument('-i', '--input_profile', type=str, help='Input taxonomic profile')
+    argparser.add_argument('-g', '--ground_truth_input_profile', type=str, help='Input ground truth taxonoomic profile')
+    argparser.add_argument('-b', '--output_base_name', type=str, help='Base name for output')
+    argparser.add_argument('-t', '--file_type', type=str, default='png', help="File type for output images (svg, png, pdf, etc.")
+    argparser.add_argument('-s', '--sample_of_interest', type=str, help="If you're only interested in a single sample of interest, specify here.")
+    argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
+    argparser.add_argument("-n", "--normalize", help="specify this option if you want to normalize the node weights/relative abundances so that they sum to one", dest="normalize", action="store_true")
+    argparser.add_argument("-m", "--merge", help="specify this option if you to average over all the @SampleID's and plot a single tree", dest="merge", action="store_true")
+    argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
+
+    # Parse the parameters
+    params = argparser.parse_args()
+    rank = params.taxonomic_rank
+    #input_file = "/home/dkoslicki/Data/CAMI2/meta_coder_analysis/profiles/marine_short/MS15.profile"
+    input_file = params.input_profile
+    #ground_truth = "/home/dkoslicki/Data/CAMI2/meta_coder_analysis/profiles/marine_short/gs_marine_short.profile"
+    ground_truth = params.ground_truth_input_profile
+    #sample_of_interest = 'marmgCAMI2_short_read_sample_0'
+    sample_of_interest = params.sample_of_interest
+    output_base_name = params.output_base_name
+    plot_l1 = params.plot_l1
+    file_type = params.file_type
+    normalize = params.normalize
+    merge = params.merge
+
+    # ingest the profiles information
+    PF = ProfilesLayout(input_file, ground_truth, sample_of_interest=sample_of_interest, normalize=normalize)
+
+    if sample_of_interest:
+        sample_keys =  [sample_of_interest]
+    elif merge:
+        sample_keys = [None] #if merge is selected, then combine all samples into single merged sample
+    else:
+        sample_keys = PF.profile_dict.keys()
+
+    #create a figure for each key on key_samples
+    for sample in sample_keys:
+        PF.make_tax_id_to_percentage(sample=sample, merge=merge)
+        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1)
+
 
 
 if __name__ == "__main__": main()

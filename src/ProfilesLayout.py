@@ -13,10 +13,10 @@ class ProfilesLayout:
             self.ground_truth_dict = load_data.open_profile_from_tsv(ground_truth_file, normalize=normalize)
         self.sample_of_interest = sample_of_interest
 
-    def get_tax_ids(self, prfl_dict):
+    def get_tax_ids(self, prfl_dict, sample=None):
         all_taxids = set()
-        if self.sample_of_interest in prfl_dict.keys():
-            predictions = prfl_dict[self.sample_of_interest]['predictions']
+        if sample in prfl_dict.keys():
+            predictions = prfl_dict[sample]['predictions']
             for prediction in predictions:
                 tax_id = prediction.taxid
                 try:  # some of these aren't actually taxID's, like 181234.123, so make sure to not include those
@@ -36,9 +36,9 @@ class ProfilesLayout:
                         continue
         return all_taxids
 
-    def get_all_tax_ids(self):
-        all_taxids = self.get_tax_ids(self.profile_dict)
-        all_taxids.update(self.get_tax_ids(self.ground_truth_dict))
+    def get_all_tax_ids(self, sample=None):
+        all_taxids = self.get_tax_ids(self.profile_dict, sample)
+        all_taxids.update(self.get_tax_ids(self.ground_truth_dict, sample))
         return all_taxids
 
     def predictions_to_tax_id(self, predictions):
@@ -49,24 +49,53 @@ class ProfilesLayout:
             tax_id_to_percentage[tax_id] = 100*percentage  # TODO: so they are fractions, not probabilities
         return tax_id_to_percentage
 
-    def make_tax_id_to_percentage(self):
+    def make_tax_id_to_percentage(self, sample=None, merge=False):
+
         self.profile_tax_id_to_percentage = dict()
         self.ground_truth_tax_id_to_percentage = dict()
-        if self.sample_of_interest:
+        if sample is not None:
             # populate for the profile
-            predictions = self.profile_dict[self.sample_of_interest]['predictions']
+            predictions = self.profile_dict[sample]['predictions']
             self.profile_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
 
             # populate for the ground truth
-            if self.sample_of_interest in self.ground_truth_dict.keys():
-                predictions = self.ground_truth_dict[self.sample_of_interest]['predictions']
+            if sample in self.ground_truth_dict.keys():
+                predictions = self.ground_truth_dict[sample]['predictions']
                 self.ground_truth_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
         else:  # otherwise, take the average
-            pass  # FIXME: do this later, since I will need to keep track of how many are added to get the mean
-            #for sample in self.profile_dict.keys():
-            #    temp_dict = self.profile_dict[sample]['predictions']
-            #    for (key, value) in temp_dict.items()
-            #        if key in self.profile_tax_id_to_percentage
+
+            merged_predictions = dict()
+
+            for sample in self.profile_dict.keys():
+                predictions = self.profile_dict[sample]['predictions']
+                for prediction in predictions:
+                    if prediction.taxid not in merged_predictions:
+                        merged_predictions[prediction.taxid]=[]
+                    merged_predictions[prediction.taxid].append(prediction.percentage)
+
+            for taxid in merged_predictions.keys():
+                values = merged_predictions[taxid]
+                merged_predictions[taxid] = np.mean(values)
+
+            self.profile_tax_id_to_percentage = merged_predictions
+
+
+            merged_predictions = dict()
+
+            for sample in self.ground_truth_dict.keys():
+                predictions = self.ground_truth_dict[sample]['predictions']
+                for prediction in predictions:
+                    if prediction.taxid not in merged_predictions:
+                        merged_predictions[prediction.taxid]=[]
+                    merged_predictions[prediction.taxid].append(prediction.percentage)
+
+            for taxid in merged_predictions.keys():
+                values = merged_predictions[taxid]
+                merged_predictions[taxid] = np.mean(values)
+
+
+            self.ground_truth_tax_id_to_percentage = merged_predictions
+
 
     def layout(self, node):
         #if not node.is_leaf():

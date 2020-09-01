@@ -165,6 +165,7 @@ def open_profile_from_tsv(file_path, normalize):
                     prediction.taxpathsn = None
                 profile.append(prediction)
 
+
     # store profile for last sample
     if 'SAMPLEID' in header and 'VERSION' in header and 'RANKS' in header:
         if reading_data and len(profile) > 0:
