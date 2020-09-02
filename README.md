@@ -3,11 +3,11 @@ A collection of tools to visualize CAMI profiling outputs
 
 # Installation
 Use conda
-```bash 
+```bash
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
-conda create -y -n CAMIViz python=3.6.10 ete3 numpy seaborn pandas matplotlib
+conda create -c etetoolkit -y -n CAMIViz python=3.7 numpy  ete3  seaborn pandas matplotlib biom-format
 conda activate CAMIViz
 ```
 
