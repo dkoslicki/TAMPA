@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 ncbi = NCBITaxa()
 
 
-def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1,scale):
+def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1,scaling):
 
     # Make the ETE3 tree
     try:
@@ -29,16 +29,16 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     #ts.legend.add_face(CircleFace(100, "#1b9e77", label="Predicted"), column=0)
     #ts.legend.add_face(CircleFace(100, '#d95f02', label="True"), column=1)
     # add white space to move the legend closer
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=0)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=0)
 
     # add the legend
-    legend_fs = 128
-    C1 = CircleFace(200, "#1b9e77")
+    legend_fs = 50
+    C1 = CircleFace(100, "#1b9e77")
     C1.hz_align = True
     ts.legend.add_face(C1, column=0)
     T1 = TextFace("Predicted", fsize=legend_fs)
@@ -46,7 +46,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.legend.add_face(T1, column=0)
 
     if len(PF.ground_truth_dict) > 0:
-        C2 = CircleFace(200, "#d95f02")
+        C2 = CircleFace(100, "#d95f02")
         C2.hz_align = True
         ts.legend.add_face(C2, column=1)
         T2 = TextFace("True", fsize=legend_fs)
@@ -59,7 +59,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.allow_face_overlap = False  # this lets me mess a bit with font size and face size without the interaction of the two
     ts.min_leaf_separation = 10
     tree_output_file = f"{output_base_name}_tree_{rank}_{sample}.{file_type}"
-    tree.render(tree_output_file, h=5, w=5, tree_style=ts, units="in", dpi=800)
+    tree.render(tree_output_file, h=5.5, w=5, tree_style=ts, units="in", dpi=800)
     #tree.render('out.svg', tree_style=ts)
     if plot_l1:
 
@@ -125,15 +125,16 @@ def main():
     ground_truth = params.ground_truth_input_profile
     #sample_of_interest = 'marmgCAMI2_short_read_sample_0'
     sample_of_interest = params.sample_of_interest
+    scaling=params.scaling
     output_base_name = params.output_base_name
     plot_l1 = params.plot_l1
     file_type = params.file_type
     normalize = params.normalize
     merge = params.merge
-    scale=params.scaling
     # scale="log"
     # ingest the profiles information
-    PF = ProfilesLayout(input_file, ground_truth, scale, sample_of_interest=sample_of_interest, normalize=normalize)
+
+    PF = ProfilesLayout(input_file, ground_truth, scaling,sample_of_interest=sample_of_interest, normalize=normalize)
 
     if sample_of_interest:
         sample_keys =  [sample_of_interest]
@@ -147,7 +148,8 @@ def main():
     for sample in sample_keys:
         # print("sample=",sample)
         PF.make_tax_id_to_percentage(sample=sample, merge=merge)
-        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1,scale)
+        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1,scaling)
+
 
 
 
