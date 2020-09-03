@@ -13,8 +13,14 @@ ncbi = NCBITaxa()
 
 
 def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1):
+
     # Make the ETE3 tree
-    tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
+    try:
+        tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
+    except:
+        logging.getLogger('Tampa').critical("Input format not compatible.")
+        exit(1)
+
     ts = TreeStyle()
     ts.layout_fn = PF.layout
     ts.mode = "c"

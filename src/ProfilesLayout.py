@@ -7,10 +7,10 @@ schema_names = COLOR_SCHEMES.keys()
 
 class ProfilesLayout:
     def __init__(self, profile_file, ground_truth_file, sample_of_interest=None, normalize=False):
-        self.profile_dict = load_data.open_profile_from_tsv(profile_file, normalize=normalize)
+        self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
         self.ground_truth_dict = dict()
         if ground_truth_file is not None:
-            self.ground_truth_dict = load_data.open_profile_from_tsv(ground_truth_file, normalize=normalize)
+            self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
         self.sample_of_interest = sample_of_interest
 
     def get_tax_ids(self, prfl_dict, sample=None):
@@ -101,16 +101,17 @@ class ProfilesLayout:
         #if not node.is_leaf():
         eps = .000000001
         node_taxid = str(node.taxid)
-        if node_taxid in self.profile_tax_id_to_percentage:
+        if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid] > 0.:
             size_profile = np.log(self.profile_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
         else:
             size_profile = eps
-        if node_taxid in self.ground_truth_tax_id_to_percentage:
+        if node_taxid in self.ground_truth_tax_id_to_percentage and self.ground_truth_tax_id_to_percentage[node_taxid] > 0.:
             size_ground_truth = np.log(self.ground_truth_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
         else:
             size_ground_truth = eps
         size = 75*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])
+        #print(np.sum(chart_sizes))
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
             F2 = TextFace(node.sci_name, tight_text=True, fsize=48)  # use the scientific name

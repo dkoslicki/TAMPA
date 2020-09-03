@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# import biom
+import biom
 import os
 import logging
 from collections import defaultdict
@@ -62,16 +62,16 @@ class Prediction:
 
 def get_column_indices(column_name_to_index):
     if "TAXID" not in column_name_to_index:
-        logging.getLogger('opal').critical("Column not found: {}".format("TAXID"))
+        logging.getLogger('Tampa').critical("Column not found: {}".format("TAXID"))
         raise RuntimeError
     if "RANK" not in column_name_to_index:
-        logging.getLogger('opal').critical("Column not found: {}".format("RANK"))
+        logging.getLogger('Tampa').critical("Column not found: {}".format("RANK"))
         raise RuntimeError
     if "PERCENTAGE" not in column_name_to_index:
-        logging.getLogger('opal').critical("Column not found: {}".format("PERCENTAGE"))
+        logging.getLogger('Tampa').critical("Column not found: {}".format("PERCENTAGE"))
         raise RuntimeError
     if "TAXPATH" not in column_name_to_index:
-        logging.getLogger('opal').critical("Column not found: {}".format("TAXPATH"))
+        logging.getLogger('Tampa').critical("Column not found: {}".format("TAXPATH"))
         raise RuntimeError
     index_taxid = column_name_to_index["TAXID"]
     index_rank = column_name_to_index["RANK"]
@@ -129,7 +129,7 @@ def open_profile_from_tsv(file_path, normalize):
                             profile = []
                             predictions_dict = {}
                     else:
-                        logging.getLogger('opal').critical("Header in file {} is incomplete. Check if the header of each sample contains at least SAMPLEID, VERSION, and RANKS.\n".format(file_path))
+                        logging.getLogger('Tampa').critical("Header in file {} is incomplete. Check if the header of each sample contains at least SAMPLEID, VERSION, and RANKS.\n".format(file_path))
                         raise RuntimeError
                     header = {}
                 reading_data = False
@@ -139,7 +139,7 @@ def open_profile_from_tsv(file_path, normalize):
                 continue
 
             if not got_column_indices:
-                logging.getLogger('opal').critical("Header line starting with @@ in file {} is missing or at wrong position.\n".format(file_path))
+                logging.getLogger('Tampa').critical("Header line starting with @@ in file {} is missing or at wrong position.\n".format(file_path))
                 raise RuntimeError
 
             reading_data = True
@@ -171,7 +171,7 @@ def open_profile_from_tsv(file_path, normalize):
         if reading_data and len(profile) > 0:
             samples_list.append((header['SAMPLEID'], header, profile))
     else:
-        logging.getLogger('opal').critical("Header in file {} is incomplete. Check if the header of each sample contains at least SAMPLEID, VERSION, and RANKS.\n".format(file_path))
+        logging.getLogger('Tampa').critical("Header in file {} is incomplete. Check if the header of each sample contains at least SAMPLEID, VERSION, and RANKS.\n".format(file_path))
         raise RuntimeError
 
     if normalize:
@@ -190,46 +190,41 @@ def open_profile_from_tsv(file_path, normalize):
 
 
 def open_profile(file_path, normalize):
-    if not os.path.exists(file_path):
-        logging.getLogger('opal').critical("Input file {} does not exist.".format(file_path))
-        exit(1)
-    try:
-        return open_profile_from_tsv(file_path, normalize)
-    except:
-        logging.getLogger('opal').critical("Input file could not be read.")
-        exit(1)
 
-    # try:
-    #     table = biom.load_table(file_path)
-    # except:
-    #     try:
-    #         return open_profile_from_tsv(file_path, normalize)
-    #     except:
-    #         logging.getLogger('opal').critical("Input file could not be read.")
-    #         exit(1)
-    #
-    # samples_list = []
-    # samples = table.ids(axis='sample')
-    # ids = table.ids(axis='observation')
-    #
-    # for sample_id in samples:
-    #     sample_metadata = table.metadata(id=sample_id, axis='sample')
-    #     profile = []
-    #     for id in ids:
-    #         prediction = Prediction()
-    #         metadata = table.metadata(id=id, axis='observation')
-    #         prediction.taxid = id
-    #         prediction.rank = metadata['rank']
-    #         prediction.percentage = float(table.get_value_by_ids(obs_id=id, samp_id=sample_id))
-    #         prediction.taxpath = metadata['taxpath']
-    #         prediction.taxpathsn = metadata['taxpathsn']
-    #         profile.append(prediction)
-    #     samples_list.append((sample_id, sample_metadata, profile))
-    #
-    # if normalize:
-    #     normalize_samples(samples_list)
-    #
-    # return samples_list
+     try:
+         table = biom.load_table(file_path)
+     except:
+         try:
+             return open_profile_from_tsv(file_path, normalize)
+         except:
+             logging.getLogger('Tampa').critical("Input file could not be read.")
+             exit(1)
+
+     samples_list = dict()
+     samples = table.ids(axis='sample')
+     ids = table.ids(axis='observation')
+
+     for sample_id in samples:
+         sample_metadata = table.metadata(id=sample_id, axis='sample')
+         profile = []
+         for id in ids:
+             prediction = Prediction()
+             metadata = table.metadata(id=id, axis='observation')
+             prediction.taxid = id
+             prediction.rank = metadata['rank']
+             prediction.percentage = float(table.get_value_by_ids(obs_id=id, samp_id=sample_id))
+             prediction.taxpath = metadata['taxpath']
+             prediction.taxpathsn = metadata['taxpathsn']
+             profile.append(prediction)
+         samples_list[sample_id] = dict()
+         samples_list[sample_id]['meta_data'] = sample_metadata
+         samples_list[sample_id]['predictions'] = profile
+
+
+     if normalize:
+         normalize_samples(samples_list)
+
+     return samples_list
 
 
 def get_taxa_names(profile):
