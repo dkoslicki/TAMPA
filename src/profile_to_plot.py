@@ -114,6 +114,7 @@ def main():
     argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
     argparser.add_argument("-n", "--normalize", help="specify this option if you want to normalize the node weights/relative abundances so that they sum to one", dest="normalize", action="store_true")
     argparser.add_argument("-m", "--merge", help="specify this option if you to average over all the @SampleID's and plot a single tree", dest="merge", action="store_true")
+    argparser.add_argument("-u", "--update", help="specify this option if you want  ete3 to check if the newest NCBI taxdump is being used", dest="update_db", action="store_true")
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
 
     # Parse the parameters
@@ -131,10 +132,16 @@ def main():
     file_type = params.file_type
     normalize = params.normalize
     merge = params.merge
-    # scale="log"
+    update_db=params.update_db
+
+    # updates the ncbi taxdump database
+    if update_db:
+        ncbi.update_taxonomy_database()
+
     # ingest the profiles information
 
     PF = ProfilesLayout(input_file, ground_truth, scaling,sample_of_interest=sample_of_interest, normalize=normalize)
+
 
     if sample_of_interest:
         sample_keys =  [sample_of_interest]
@@ -144,7 +151,7 @@ def main():
         sample_keys = PF.profile_dict.keys()
 
     #create a figure for each key on key_samples
-    
+
     for sample in sample_keys:
         # print("sample=",sample)
         PF.make_tax_id_to_percentage(sample=sample, merge=merge)
