@@ -8,6 +8,7 @@ import seaborn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import logging
 
 ncbi = NCBITaxa()
 
@@ -114,7 +115,8 @@ def main():
     argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
     argparser.add_argument("-n", "--normalize", help="specify this option if you want to normalize the node weights/relative abundances so that they sum to one", dest="normalize", action="store_true")
     argparser.add_argument("-m", "--merge", help="specify this option if you to average over all the @SampleID's and plot a single tree", dest="merge", action="store_true")
-    argparser.add_argument("-u", "--update", help="specify this option if you want  ete3 to check if the newest NCBI taxdump is being used", dest="update_db", action="store_true")
+    argparser.add_argument("-u", "--update_db", help="specify this option if you want  ete3 to check if the newest NCBI taxdump is being used", dest="update_db", action="store_true")
+    argparser.add_argument('-d', '--db_file', type=str, default='', help="specify database dump file")
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
 
     # Parse the parameters
@@ -133,10 +135,18 @@ def main():
     normalize = params.normalize
     merge = params.merge
     update_db=params.update_db
+    db_file=params.db_file
 
     # updates the ncbi taxdump database
-    if update_db:
-        ncbi.update_taxonomy_database()
+    if update_db or db_file != '':
+        try:
+            ncbi.update_taxonomy_database(db_file)
+        except:
+            if not os.path.exists(db_file):
+                logging.getLogger('Tampa').critical("Database file does not exist.")
+            else:
+                logging.getLogger('Tampa').critical("Database file not compatible.")
+            exit(1)
 
     # ingest the profiles information
 
