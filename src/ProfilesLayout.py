@@ -133,16 +133,16 @@ class ProfilesLayout:
             else:
                 size_ground_truth = eps        
 
-        size = 25*max([size_ground_truth, size_profile])
+        size = 500*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])
-        #print(np.sum(chart_sizes))
+        print(np.sum(chart_sizes))
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
-            F2 = TextFace(node.sci_name, tight_text=True, fsize=20)  # use the scientific name
+            F2 = TextFace(node.sci_name, tight_text=True, fsize=68)  # use the scientific name
             faces.add_face_to_node(F2, node, column=0, position="branch-right")
+            print(chart_sizes)
             F = faces.PieChartFace(chart_sizes,
-                                   colors=['#1b9e77', '#d95f02'],
-                                   width=size, height=size)
+                                   colors=['#1b9e77', '#d95f02'],width=size, height=size)
 
             F.border.width = None
             F.opacity = 0.6

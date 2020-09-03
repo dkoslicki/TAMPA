@@ -29,16 +29,16 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     #ts.legend.add_face(CircleFace(100, "#1b9e77", label="Predicted"), column=0)
     #ts.legend.add_face(CircleFace(100, '#d95f02', label="True"), column=1)
     # add white space to move the legend closer
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=0)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=0)
 
     # add the legend
-    legend_fs = 50
-    C1 = CircleFace(100, "#1b9e77")
+    legend_fs = 128
+    C1 = CircleFace(200, "#1b9e77")
     C1.hz_align = True
     ts.legend.add_face(C1, column=0)
     T1 = TextFace("Predicted", fsize=legend_fs)
@@ -46,7 +46,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.legend.add_face(T1, column=0)
 
     if len(PF.ground_truth_dict) > 0:
-        C2 = CircleFace(100, "#d95f02")
+        C2 = CircleFace(200, "#d95f02")
         C2.hz_align = True
         ts.legend.add_face(C2, column=1)
         T2 = TextFace("True", fsize=legend_fs)
@@ -56,10 +56,10 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     T3 = TextFace(f"Tool: {os.path.basename(input_file).split('.')[0]}", fsize=legend_fs)
     T3.hz_align = True
     ts.legend.add_face(T3, column=0)
-    ts.allow_face_overlap = True  # this lets me mess a bit with font size and face size without the interaction of the two
+    ts.allow_face_overlap = False  # this lets me mess a bit with font size and face size without the interaction of the two
     ts.min_leaf_separation = 10
     tree_output_file = f"{output_base_name}_tree_{rank}_{sample}.{file_type}"
-    tree.render(tree_output_file, h=5.5, w=5, tree_style=ts, units="in", dpi=800)
+    tree.render(tree_output_file, h=5, w=5, tree_style=ts, units="in", dpi=800)
     #tree.render('out.svg', tree_style=ts)
     if plot_l1:
 
