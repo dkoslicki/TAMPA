@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 ncbi = NCBITaxa()
 
 
-def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1):
+def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1,scale):
 
     # Make the ETE3 tree
     try:
@@ -29,16 +29,16 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     #ts.legend.add_face(CircleFace(100, "#1b9e77", label="Predicted"), column=0)
     #ts.legend.add_face(CircleFace(100, '#d95f02', label="True"), column=1)
     # add white space to move the legend closer
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=0)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(650, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=0)
 
     # add the legend
-    legend_fs = 128
-    C1 = CircleFace(200, "#1b9e77")
+    legend_fs = 50
+    C1 = CircleFace(100, "#1b9e77")
     C1.hz_align = True
     ts.legend.add_face(C1, column=0)
     T1 = TextFace("Predicted", fsize=legend_fs)
@@ -46,7 +46,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.legend.add_face(T1, column=0)
 
     if len(PF.ground_truth_dict) > 0:
-        C2 = CircleFace(200, "#d95f02")
+        C2 = CircleFace(100, "#d95f02")
         C2.hz_align = True
         ts.legend.add_face(C2, column=1)
         T2 = TextFace("True", fsize=legend_fs)
@@ -59,9 +59,8 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.allow_face_overlap = True  # this lets me mess a bit with font size and face size without the interaction of the two
     ts.min_leaf_separation = 10
     tree_output_file = f"{output_base_name}_tree_{rank}_{sample}.{file_type}"
-    tree.render(tree_output_file, h=5, w=5, tree_style=ts, units="in", dpi=800)
+    tree.render(tree_output_file, h=5.5, w=5, tree_style=ts, units="in", dpi=800)
     #tree.render('out.svg', tree_style=ts)
-
     if plot_l1:
 
         # if you asked for L1 too, then plot that
@@ -111,6 +110,7 @@ def main():
     argparser.add_argument('-b', '--output_base_name', type=str, help='Base name for output')
     argparser.add_argument('-t', '--file_type', type=str, default='png', help="File type for output images (svg, png, pdf, etc.")
     argparser.add_argument('-s', '--sample_of_interest', type=str, help="If you're only interested in a single sample of interest, specify here.")
+    argparser.add_argument('-k', '--scaling', type=str, default='log', help="Plot scaling (log, sqrt, power etc.")
     argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
     argparser.add_argument("-n", "--normalize", help="specify this option if you want to normalize the node weights/relative abundances so that they sum to one", dest="normalize", action="store_true")
     argparser.add_argument("-m", "--merge", help="specify this option if you to average over all the @SampleID's and plot a single tree", dest="merge", action="store_true")
@@ -130,9 +130,10 @@ def main():
     file_type = params.file_type
     normalize = params.normalize
     merge = params.merge
-
+    scale=params.scaling
+    # scale="log"
     # ingest the profiles information
-    PF = ProfilesLayout(input_file, ground_truth, sample_of_interest=sample_of_interest, normalize=normalize)
+    PF = ProfilesLayout(input_file, ground_truth, scale, sample_of_interest=sample_of_interest, normalize=normalize)
 
     if sample_of_interest:
         sample_keys =  [sample_of_interest]
@@ -142,9 +143,11 @@ def main():
         sample_keys = PF.profile_dict.keys()
 
     #create a figure for each key on key_samples
+    
     for sample in sample_keys:
+        # print("sample=",sample)
         PF.make_tax_id_to_percentage(sample=sample, merge=merge)
-        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1)
+        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1,scale)
 
 
 

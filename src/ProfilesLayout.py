@@ -6,13 +6,13 @@ schema_names = COLOR_SCHEMES.keys()
 
 
 class ProfilesLayout:
-    def __init__(self, profile_file, ground_truth_file, sample_of_interest=None, normalize=False):
+    def __init__(self, profile_file, ground_truth_file, temp, sample_of_interest=None, normalize=False):
         self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
         self.ground_truth_dict = dict()
         if ground_truth_file is not None:
             self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
         self.sample_of_interest = sample_of_interest
-
+        self.scale=temp
     def get_tax_ids(self, prfl_dict, sample=None):
         all_taxids = set()
         if sample in prfl_dict.keys():
@@ -98,23 +98,47 @@ class ProfilesLayout:
 
 
     def layout(self, node):
+        scale=self.scale
         #if not node.is_leaf():
         eps = .000000001
         node_taxid = str(node.taxid)
-        if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid] > 0.:
-            size_profile = np.log(self.profile_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
-        else:
-            size_profile = eps
-        if node_taxid in self.ground_truth_tax_id_to_percentage and self.ground_truth_tax_id_to_percentage[node_taxid] > 0.:
-            size_ground_truth = np.log(self.ground_truth_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
-        else:
-            size_ground_truth = eps
-        size = 75*max([size_ground_truth, size_profile])
+
+        if(self.scale=="log"):
+            if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid] > 0.:
+                size_profile = np.log(self.profile_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
+            else:
+                size_profile = eps
+            if node_taxid in self.ground_truth_tax_id_to_percentage and self.ground_truth_tax_id_to_percentage[node_taxid] > 0.:
+                size_ground_truth = np.log(self.ground_truth_tax_id_to_percentage[node_taxid])  # TODO: log scale ok?
+            else:
+                size_ground_truth = eps
+
+        elif (self.scale=="sqrt"):
+            if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid] > 0.:
+                size_profile = np.sqrt(self.profile_tax_id_to_percentage[node_taxid]) 
+            else:
+                size_profile = eps
+            if node_taxid in self.ground_truth_tax_id_to_percentage and self.ground_truth_tax_id_to_percentage[node_taxid] > 0.:
+                size_ground_truth = np.sqrt(self.ground_truth_tax_id_to_percentage[node_taxid]) 
+            else:
+                size_ground_truth = eps
+        
+        elif (self.scale=="exponent"):
+            if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid] > 0.:
+                size_profile = np.exp(self.profile_tax_id_to_percentage[node_taxid]) 
+            else:
+                size_profile = eps
+            if node_taxid in self.ground_truth_tax_id_to_percentage and self.ground_truth_tax_id_to_percentage[node_taxid] > 0.:
+                size_ground_truth = np.exp(self.ground_truth_tax_id_to_percentage[node_taxid]) 
+            else:
+                size_ground_truth = eps        
+
+        size = 25*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])
         #print(np.sum(chart_sizes))
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
-            F2 = TextFace(node.sci_name, tight_text=True, fsize=48)  # use the scientific name
+            F2 = TextFace(node.sci_name, tight_text=True, fsize=20)  # use the scientific name
             faces.add_face_to_node(F2, node, column=0, position="branch-right")
             F = faces.PieChartFace(chart_sizes,
                                    colors=['#1b9e77', '#d95f02'],
