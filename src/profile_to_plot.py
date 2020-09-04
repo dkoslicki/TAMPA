@@ -26,6 +26,8 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.layout_fn = PF.layout
     ts.mode = "c"
     ts.show_leaf_name = False
+    ts.show_branch_length = False
+    ts.show_branch_support = False
     ts.min_leaf_separation = 10
     ts.arc_span = 360
     #ts.legend.add_face(CircleFace(100, "#1b9e77", label="Predicted"), column=0)
@@ -61,7 +63,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.allow_face_overlap = False  # this lets me mess a bit with font size and face size without the interaction of the two
     ts.min_leaf_separation = 10
     tree_output_file = f"{output_base_name}_tree_{rank}_{sample}.{file_type}"
-    tree.render(tree_output_file, h=5.5, w=5, tree_style=ts, units="in", dpi=800)
+    tree.render(tree_output_file, h=5.2, w=5, tree_style=ts, units="in", dpi=800)
     #tree.render('out.svg', tree_style=ts)
     if plot_l1:
 
@@ -114,6 +116,7 @@ def main():
     argparser.add_argument('-s', '--sample_of_interest', type=str, help="If you're only interested in a single sample of interest, specify here.")
     argparser.add_argument('-k', '--scaling', type=str, default='log', help="Plot scaling (log, sqrt, power etc.")
     argparser.add_argument('-a', '--labels', type=str, default='All', help="Specify this otion if you want to add labels to the graph (All, Leaf, None)")
+    argparser.add_argument('-y', '--layout', type=str, default='Pie', help="Chose the layout of the graph (Pie, Bar, Circle, Rectangle")
     argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
     argparser.add_argument("-n", "--normalize", help="specify this option if you want to normalize the node weights/relative abundances so that they sum to one", dest="normalize", action="store_true")
     argparser.add_argument("-m", "--merge", help="specify this option if you to average over all the @SampleID's and plot a single tree", dest="merge", action="store_true")
@@ -132,6 +135,7 @@ def main():
     sample_of_interest = params.sample_of_interest
     scaling=params.scaling
     labels=params.labels
+    layt=params.layout
     output_base_name = params.output_base_name
     plot_l1 = params.plot_l1
     file_type = params.file_type
@@ -153,7 +157,7 @@ def main():
 
     # ingest the profiles information
 
-    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, sample_of_interest=sample_of_interest, normalize=normalize)
+    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, layt,sample_of_interest=sample_of_interest, normalize=normalize)
 
 
     if sample_of_interest:
@@ -168,7 +172,7 @@ def main():
     for sample in sample_keys:
         # print("sample=",sample)
         PF.make_tax_id_to_percentage(sample=sample, merge=merge)
-        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1,scaling)
+        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling)
 
 
 

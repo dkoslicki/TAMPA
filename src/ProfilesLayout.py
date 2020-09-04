@@ -6,7 +6,7 @@ schema_names = COLOR_SCHEMES.keys()
 
 
 class ProfilesLayout:
-    def __init__(self, profile_file, ground_truth_file, scaling,labels, sample_of_interest=None, normalize=False):
+    def __init__(self, profile_file, ground_truth_file, scaling,labels, layt, sample_of_interest=None, normalize=False):
         self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
         self.ground_truth_dict = dict()
         if ground_truth_file is not None:
@@ -14,6 +14,7 @@ class ProfilesLayout:
         self.sample_of_interest = sample_of_interest
         self.scaling=scaling
         self.labels=labels
+        self.layt=layt
 
     def get_tax_ids(self, prfl_dict, sample=None):
         all_taxids = set()
@@ -112,6 +113,8 @@ class ProfilesLayout:
                 size_profile = np.sqrt(self.profile_tax_id_to_percentage[node_taxid])
             elif(scale=="exponent"):
                 size_profile = np.exp(self.profile_tax_id_to_percentage[node_taxid])
+            elif(scale=="linear"):
+                size_profile = (self.profile_tax_id_to_percentage[node_taxid])
         else:
             size_profile = eps
 
@@ -122,10 +125,12 @@ class ProfilesLayout:
                 size_ground_truth = np.sqrt(self.ground_truth_tax_id_to_percentage[node_taxid])
             elif(scale=="exponent"):
                 size_ground_truth = np.exp(self.ground_truth_tax_id_to_percentage[node_taxid])
+            elif(scale=="linear"):
+                size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid])
         else:
             size_ground_truth = eps
 
-        size = 20*max([size_ground_truth, size_profile])
+        size = 25*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])
         # print(np.sum(chart_sizes))
         if not np.sum(chart_sizes) == 0:
@@ -138,10 +143,28 @@ class ProfilesLayout:
                     F2 = TextFace(node.sci_name, tight_text=True, fsize=20)  # use the scientific name
                     faces.add_face_to_node(F2, node, column=0, position="branch-right")
             # print(chart_sizes)
-            F = faces.PieChartFace(chart_sizes,
-                                   colors=['#1b9e77', '#d95f02'],width=size, height=size)
-            # F = faces.BarChartFace(chart_sizes,deviations=None,labels=None,
-            #                         colors=['#1b9e77', '#d95f02'],width=50, height=50   )
+
+            if(self.layt=="Pie"):  # PIE CHART
+                F = faces.PieChartFace(chart_sizes,colors=['#1b9e77', '#d95f02'],width=size, height=size)
+
+            elif(self.layt=="Bar"):# BAR CHART
+                F = faces.BarChartFace(chart_sizes,deviations=None,labels=node.sci_name, colors=['#1b9e77', '#d95f02'],width=50, height=50)
+
+            elif(self.layt=="Circle"): #TWO CIRCLES SIDE BY SIDE
+                F=faces.CircleFace(radius=size_profile*10, color="#1b9e77", style='circle', label=None)
+                F1=faces.CircleFace(radius=size_ground_truth*10, color="#d95f02", style='circle', label=None)
+                F1.border.width = None
+                F1.opacity = 0.6
+                faces.add_face_to_node(F1, node, 0, position="float-behind")
+
+            elif(self.layt=="Rectangle"): #TWO CIRCLES SIDE BY SIDE
+                F=faces.RectFace(width=size_profile*40, height=40, fgcolor="#1b9e77",bgcolor="#1b9e77", label=None)
+                F1=faces.RectFace(width=size_ground_truth*40, height=40, fgcolor="#d95f02",bgcolor="#d95f02", label=None)
+                F1.border.width = None
+                F1.opacity = 0.6
+                faces.add_face_to_node(F1, node, 0, position="float-behind")
+                
+
+            faces.add_face_to_node(F, node, 0, position="float-behind")
             F.border.width = None
             F.opacity = 0.6
-            faces.add_face_to_node(F, node, 0, position="float-behind")
