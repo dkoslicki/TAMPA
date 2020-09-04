@@ -26,6 +26,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.mode = "c"
     ts.show_leaf_name = False
     ts.min_leaf_separation = 10
+    ts.arc_span = 360
     #ts.legend.add_face(CircleFace(100, "#1b9e77", label="Predicted"), column=0)
     #ts.legend.add_face(CircleFace(100, '#d95f02', label="True"), column=1)
     # add white space to move the legend closer
@@ -111,6 +112,7 @@ def main():
     argparser.add_argument('-t', '--file_type', type=str, default='png', help="File type for output images (svg, png, pdf, etc.")
     argparser.add_argument('-s', '--sample_of_interest', type=str, help="If you're only interested in a single sample of interest, specify here.")
     argparser.add_argument('-k', '--scaling', type=str, default='log', help="Plot scaling (log, sqrt, power etc.")
+    argparser.add_argument('-a', '--labels', type=str, default='All', help="Specify this otion if you want to add labels to the graph (All, Leaf, None)")
     argparser.add_argument('-l', '--plot_l1', action='store_true', help="If you also want to plot the L1 error")
     argparser.add_argument("-n", "--normalize", help="specify this option if you want to normalize the node weights/relative abundances so that they sum to one", dest="normalize", action="store_true")
     argparser.add_argument("-m", "--merge", help="specify this option if you to average over all the @SampleID's and plot a single tree", dest="merge", action="store_true")
@@ -127,6 +129,7 @@ def main():
     #sample_of_interest = 'marmgCAMI2_short_read_sample_0'
     sample_of_interest = params.sample_of_interest
     scaling=params.scaling
+    labels=params.labels
     output_base_name = params.output_base_name
     plot_l1 = params.plot_l1
     file_type = params.file_type
@@ -140,7 +143,7 @@ def main():
 
     # ingest the profiles information
 
-    PF = ProfilesLayout(input_file, ground_truth, scaling,sample_of_interest=sample_of_interest, normalize=normalize)
+    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, sample_of_interest=sample_of_interest, normalize=normalize)
 
 
     if sample_of_interest:

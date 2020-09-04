@@ -6,13 +6,14 @@ schema_names = COLOR_SCHEMES.keys()
 
 
 class ProfilesLayout:
-    def __init__(self, profile_file, ground_truth_file, scaling,sample_of_interest=None, normalize=False):
+    def __init__(self, profile_file, ground_truth_file, scaling,labels, sample_of_interest=None, normalize=False):
         self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
         self.ground_truth_dict = dict()
         if ground_truth_file is not None:
             self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
         self.sample_of_interest = sample_of_interest
         self.scaling=scaling
+        self.labels=labels
 
     def get_tax_ids(self, prfl_dict, sample=None):
         all_taxids = set()
@@ -124,17 +125,23 @@ class ProfilesLayout:
         else:
             size_ground_truth = eps
 
-        size = 25*max([size_ground_truth, size_profile])
+        size = 20*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])
         # print(np.sum(chart_sizes))
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
-            F2 = TextFace(node.sci_name, tight_text=True, fsize=20)  # use the scientific name
-            faces.add_face_to_node(F2, node, column=0, position="branch-right")
+            if(self.labels=="All"):
+                F2 = TextFace(node.sci_name, tight_text=True, fsize=20)  # use the scientific name
+                faces.add_face_to_node(F2, node, column=0, position="branch-right")
+            elif(self.labels=="Leaf"):
+                if node.is_leaf():
+                    F2 = TextFace(node.sci_name, tight_text=True, fsize=20)  # use the scientific name
+                    faces.add_face_to_node(F2, node, column=0, position="branch-right")
             # print(chart_sizes)
             F = faces.PieChartFace(chart_sizes,
                                    colors=['#1b9e77', '#d95f02'],width=size, height=size)
-
+            # F = faces.BarChartFace(chart_sizes,deviations=None,labels=None,
+            #                         colors=['#1b9e77', '#d95f02'],width=50, height=50   )
             F.border.width = None
             F.opacity = 0.6
             faces.add_face_to_node(F, node, 0, position="float-behind")
