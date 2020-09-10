@@ -5,6 +5,18 @@ import numpy as np
 schema_names = COLOR_SCHEMES.keys()
 
 
+def abbreaviate_name(name):
+
+    names = name.split(' ')
+    abr_name = names[0][0]+'.'
+    if len(names) > 1:
+        for i in range(1,len(names)):
+            abr_name += ' '+names[i]
+    else:
+        return name
+    return abr_name
+
+
 class ProfilesLayout:
     def __init__(self, profile_file, ground_truth_file, scaling,labels, layt, sample_of_interest=None, normalize=False):
         self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
@@ -108,7 +120,7 @@ class ProfilesLayout:
 
         if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid] > 0.:
             if  (scale=="log"):
-                size_profile = np.log(self.profile_tax_id_to_percentage[node_taxid])  
+                size_profile = np.log(self.profile_tax_id_to_percentage[node_taxid])
             elif(scale=="sqrt"):
                 size_profile = np.sqrt(self.profile_tax_id_to_percentage[node_taxid])
             elif(scale=="exponent"):
@@ -136,11 +148,11 @@ class ProfilesLayout:
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
             if(self.labels=="All"):
-                F2 = TextFace(node.sci_name, tight_text=True, fsize=20)  # use the scientific name
+                F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=20)  # use the scientific name
                 faces.add_face_to_node(F2, node, column=0, position="branch-right")
             elif(self.labels=="Leaf"):
                 if node.is_leaf():
-                    F2 = TextFace(node.sci_name, tight_text=True, fsize=20)  # use the scientific name
+                    F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=20)  # use the scientific name
                     faces.add_face_to_node(F2, node, column=0, position="branch-right")
             # print(chart_sizes)
 
@@ -148,7 +160,9 @@ class ProfilesLayout:
                 F = faces.PieChartFace(chart_sizes,colors=['#1b9e77', '#d95f02'],width=size, height=size)
 
             elif(self.layt=="Bar"):# BAR CHART
-                F = faces.BarChartFace(chart_sizes,deviations=None,labels=node.sci_name, colors=['#1b9e77', '#d95f02'],width=50, height=50)
+                F = faces.BarChartFace(chart_sizes, deviations=None, labels=None, colors=['#1b9e77', '#d95f02'],width=50, height=50, label_fsize=0, scale_fsize=0)
+
+                #print(chart_sizes, node.sci_name)
 
             elif(self.layt=="Circle"): #TWO CIRCLES SIDE BY SIDE
                 F=faces.CircleFace(radius=size_profile*10, color="#1b9e77", style='circle', label=None)
@@ -163,7 +177,7 @@ class ProfilesLayout:
                 F1.border.width = None
                 F1.opacity = 0.6
                 faces.add_face_to_node(F1, node, 0, position="float-behind")
-                
+
 
             faces.add_face_to_node(F, node, 0, position="float-behind")
             F.border.width = None
