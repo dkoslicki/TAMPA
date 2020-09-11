@@ -3,21 +3,24 @@ from ProfilesLayout import ProfilesLayout
 from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace
 import argparse
 import os
-os.environ['QT_QPA_PLATFORM']='offscreen'
+#os.environ['QT_QPA_PLATFORM']='offscreen'
 import seaborn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
 
+import faulthandler
+
 ncbi = NCBITaxa()
 
 
-def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1,scaling):
+def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi):
 
     # Make the ETE3 tree
     try:
         tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
+
     except:
         logging.getLogger('Tampa').critical("Input format not compatible.")
         exit(1)
@@ -63,8 +66,9 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.allow_face_overlap = False  # this lets me mess a bit with font size and face size without the interaction of the two
     ts.min_leaf_separation = 10
     tree_output_file = f"{output_base_name}_tree_{rank}_{sample}.{file_type}"
-    tree.render(tree_output_file, h=5.2, w=5, tree_style=ts, units="in", dpi=800)
-    #tree.render('out.svg', tree_style=ts)
+    tree.render(tree_output_file, h=5.2, w=5, tree_style=ts, units="in", dpi=output_dpi)
+
+
     if plot_l1:
 
         # if you asked for L1 too, then plot that
@@ -96,15 +100,19 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
         ax.set_ylim(-.5, max_val)
         ax.set_xbound(-.5, max_val)
         ax.set_ybound(-.5, max_val)
+
+        #plt.figure(figsize=(6,6))
         plt.plot(np.linspace(0, max_val, 100), np.linspace(0, max_val, 100), color='k')
+
         for (x, y) in zip(true_abundance_at_rank, predicted_abundance_at_rank):
             if x > y:
                 ax.vlines(x, y, x, colors='r')
             if y > x:
                 ax.vlines(x, x, y, colors='r')
         plt.title(f"Tool: {os.path.basename(input_file).split('.')[0]}")
+        plt.tight_layout()
         l1_out_file = f"{output_base_name}_L1_{rank}.{file_type}"
-        plt.savefig(l1_out_file, dpi=800)
+        plt.savefig(l1_out_file, dpi=output_dpi)
 
 
 def main():
@@ -122,7 +130,9 @@ def main():
     argparser.add_argument("-m", "--merge", help="specify this option if you to average over all the @SampleID's and plot a single tree", dest="merge", action="store_true")
     argparser.add_argument("-u", "--update_db", help="specify this option if you want  ete3 to check if the newest NCBI taxdump is being used", dest="update_db", action="store_true")
     argparser.add_argument('-d', '--db_file', type=str, default='', help="specify database dump file")
+    argparser.add_argument('-r', '--res', type=str, default='800', help="specify the resolution (dpi)")
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
+
 
     # Parse the parameters
     params = argparser.parse_args()
@@ -143,6 +153,7 @@ def main():
     merge = params.merge
     update_db=params.update_db
     db_file=params.db_file
+    output_dpi=int(params.res)
 
     # updates the ncbi taxdump database
     if update_db or db_file != '':
@@ -172,7 +183,7 @@ def main():
     for sample in sample_keys:
         # print("sample=",sample)
         PF.make_tax_id_to_percentage(sample=sample, merge=merge)
-        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling)
+        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi)
 
 
 
