@@ -1,0 +1,34 @@
+Metadata-Version: 2.1
+Name: CAMIViz
+Version: 0.1
+Summary: A collection of tools to visualize CAMI profiling outputs
+Home-page: https://github.com/dkoslicki/CAMIProfilingVisualization
+Author: David Koslicki
+Author-email: dmk333@psu.edu
+License: MIT
+Description: # CAMIProfilingVisualization
+        A collection of tools to visualize CAMI profiling outputs
+        
+        # Installation
+        Use conda
+        ```bash
+        conda config --add channels defaults
+        conda config --add channels bioconda
+        conda config --add channels conda-forge
+        conda create -c etetoolkit -y -n CAMIViz python=3.7 numpy  ete3  seaborn pandas matplotlib biom-format
+        conda activate CAMIViz
+        ```
+        
+        # Example usage
+        ```bash
+        python src/profile_to_plot.py -i data/prediction_multi.profile -g data/ground_truth_multi.profile -b test -s sample_0 genus
+        ```
+        This should result in a plot that looks like:
+        ![](data/test_tree_genus.png)
+        
+Keywords: profile_to_plot src python package
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown

@@ -1,0 +1,3 @@
+[console_scripts]
+profile_to_plot = src.profile_to_plot:main
+
