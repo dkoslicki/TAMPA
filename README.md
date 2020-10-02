@@ -1,5 +1,7 @@
-# CAMIProfilingVisualization
-A collection of tools to visualize CAMI profiling outputs
+# TAMPA
+**TA**xono**M**ic **P**rofiling **A**nalysis: A collection of tools to visualize CAMI profiling outputs.
+
+This repo was previously known as "CAMIProfilingVisualization"
 
 # Installation
 Use conda
