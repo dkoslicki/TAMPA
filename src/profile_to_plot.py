@@ -15,19 +15,19 @@ import faulthandler
 ncbi = NCBITaxa()
 
 
+def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile):
 
 
-def build_tree(PF, rank_limit):
+    PF.make_tax_id_to_percentage(sample=sample)
 
 
-    return True
-
-def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi):
-
-    # Make the ETE3 tree
     try:
-        tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
-
+        if use_profile:
+            # Make the custom ETE3 tree
+            tree = PF.build_tree(sample, rank_limit=rank)
+        else:
+            # Make the ETE3 tree
+            tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
     except:
         logging.getLogger('Tampa').critical("Input format not compatible.")
         exit(1)
@@ -137,6 +137,7 @@ def main():
     argparser.add_argument("-m", "--merge", help="specify this option if you to average over all the @SampleID's and plot a single tree", dest="merge", action="store_true")
     argparser.add_argument('-d', '--db_file', type=str, default='', help="specify database dump file")
     argparser.add_argument('-r', '--res', type=str, default='800', help="specify the resolution (dpi)")
+    argparser.add_argument('-p', '--profile', action='store_true', help="specify this option to use only the input profile(s) taxID's to construct the tree")
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
 
 
@@ -159,8 +160,9 @@ def main():
     merge = params.merge
     db_file=params.db_file
     output_dpi=int(params.res)
+    use_profile = params.profile
 
-    
+
     # updates the ncbi taxdump database
     if not is_taxadb_up_to_date() or db_file != '':
         try:
@@ -173,7 +175,6 @@ def main():
             exit(1)
 
     # ingest the profiles information
-
     PF = ProfilesLayout(input_file, ground_truth, scaling, labels, layt,sample_of_interest=sample_of_interest, normalize=normalize)
 
 
@@ -182,16 +183,11 @@ def main():
     elif merge:
         sample_keys = [None] #if merge is selected, then combine all samples into single merged sample
     else:
-        sample_keys = PF.profile_dict.keys()
+        sample_keys = PF.get_sampleIDs()
 
     #create a figure for each key on key_samples
-
     for sample in sample_keys:
-        # print("sample=",sample)
-        PF.make_tax_id_to_percentage(sample=sample, merge=merge)
-        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi)
-
-
+        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile)
 
 
 if __name__ == "__main__": main()
