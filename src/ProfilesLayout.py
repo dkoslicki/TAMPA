@@ -1,4 +1,5 @@
 import load_data
+from  load_data import Prediction
 from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, TextFace, PhyloTree
 import numpy as np
 schema_names = COLOR_SCHEMES.keys()
@@ -16,22 +17,72 @@ def abbreaviate_name(name):
     return abr_name
 
 
+
 class ProfilesLayout:
-    def __init__(self, profile_file, ground_truth_file, scaling, labels, layt, sample_of_interest=None, normalize=False):
-        self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
+    def __init__(self, scaling, labels, layt, sample_of_interest=None):
+
+        self.profile_dict = dict()
         self.ground_truth_dict = dict()
-        if ground_truth_file is not None:
-            self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
         self.sample_of_interest = sample_of_interest
         self.scaling=scaling
         self.labels=labels
         self.layt=layt
 
 
+    def load_data(self, profile_file, ground_truth_file, normalize=False):
+
+        self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
+
+        if ground_truth_file is not None:
+            self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
+
+        if self.sample_of_interest == "merged":
+            self.create_merged_sample(self.profile_dict)
+            self.create_merged_sample(self.ground_truth_dict)
+
+
     def get_sampleIDs(self):
         return self.profile_dict.keys()
 
+    def create_merged_sample(self, sample_dict):
+
+        merged_predictions = dict()
+        samples = sample_dict.keys()
+
+        for sample_id in samples:
+            predictions = sample_dict[sample_id]['predictions']
+
+            for prediction in predictions:
+                tax_id = prediction.taxid
+
+                if tax_id not in merged_predictions:
+                    merged_predictions[tax_id] = dict()
+                    merged_predictions[tax_id]["values"] = []
+
+                merged_predictions[tax_id]["values"].append(prediction.percentage) # TODO: so they are fractions, not probabilities
+                merged_predictions[tax_id]['rank'] = prediction.rank
+                merged_predictions[tax_id]['taxpath'] = prediction.taxpath
+                merged_predictions[tax_id]['taxpathsn'] = prediction.taxpathsn
+
+        sample_dict["merged"] = dict()
+        sample_dict["merged"]['predictions'] = []
+        sample_dict["merged"]['metadata'] = "merged sample"
+
+        for taxid in merged_predictions.keys():
+
+            values = merged_predictions[taxid]['values']
+
+            prediction = Prediction()
+            prediction.taxid = taxid
+            prediction.rank = merged_predictions[taxid]['rank']
+            prediction.percentage = np.mean(values)
+            prediction.taxpath = merged_predictions[taxid]['taxpath']
+            prediction.taxpathsn = merged_predictions[taxid]['taxpathsn']
+
+            sample_dict["merged"]["predictions"].append(prediction)
+
     def get_tax_ids(self, prfl_dict, sample=None):
+
         all_taxids = set()
 
         if sample in prfl_dict.keys():
@@ -70,31 +121,17 @@ class ProfilesLayout:
         else:
             sample_dict = self.ground_truth_dict
 
-        samples = sample_dict.keys()
-        if sample is not None:
-            samples = [sample]
-
-
         merged_predictions = dict()
 
-        for sample_id in samples:
-            predictions = sample_dict[sample_id]['predictions']
+        predictions = sample_dict[sample]['predictions']
 
-            for prediction in predictions:
-                tax_id = prediction.taxid
-
-                if tax_id not in tax_id_to_percentage:
-                    tax_id_to_percentage[tax_id] = dict()
-                    merged_predictions[tax_id]=[]
-                merged_predictions[tax_id].append(prediction.percentage*100) # TODO: so they are fractions, not probabilities
-                tax_id_to_percentage[tax_id]['rank'] = prediction.rank
-                tax_id_to_percentage[tax_id]['taxpath'] = prediction.taxpath
-                tax_id_to_percentage[tax_id]['taxpathsn'] = prediction.taxpathsn
-
-
-        for tax_id in merged_predictions.keys():
-            values = merged_predictions[tax_id]
-            tax_id_to_percentage[tax_id]['percentage'] =  np.mean(values)
+        for prediction in predictions:
+            tax_id = prediction.taxid
+            tax_id_to_percentage[tax_id] = dict()
+            tax_id_to_percentage[tax_id]['percentage'] = prediction.percentage*100 # TODO: so they are fractions, not probabilities
+            tax_id_to_percentage[tax_id]['rank'] = prediction.rank
+            tax_id_to_percentage[tax_id]['taxpath'] = prediction.taxpath
+            tax_id_to_percentage[tax_id]['taxpathsn'] = prediction.taxpathsn
 
         return tax_id_to_percentage
 
@@ -223,6 +260,8 @@ class ProfilesLayout:
                 size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])
         else:
             size_ground_truth = eps
+
+        print(size_profile, size_ground_truth)
 
         size = 50*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])

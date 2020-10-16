@@ -20,7 +20,6 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
 
     PF.make_tax_id_to_percentage(sample=sample)
 
-
     try:
         if use_profile:
             # Make the custom ETE3 tree
@@ -28,7 +27,6 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
         else:
             # Make the ETE3 tree
             tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
-
     except:
         logging.getLogger('Tampa').critical("Input format not compatible.")
         exit(1)
@@ -175,16 +173,19 @@ def main():
                 logging.getLogger('Tampa').critical("Database file not compatible.")
             exit(1)
 
-    # ingest the profiles information
-    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, layt,sample_of_interest=sample_of_interest, normalize=normalize)
 
 
     if sample_of_interest:
         sample_keys =  [sample_of_interest]
     elif merge:
-        sample_keys = [None] #if merge is selected, then combine all samples into single merged sample
+        sample_keys = ["merged"] #if merge is selected, then combine all samples into single merged sample
+        sample_of_interest = "merged"
     else:
         sample_keys = PF.get_sampleIDs()
+
+    # ingest the profiles information
+    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, layt, sample_of_interest=sample_of_interest, normalize=normalize)
+
 
     #create a figure for each key on key_samples
     for sample in sample_keys:
