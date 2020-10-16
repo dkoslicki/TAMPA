@@ -1,7 +1,6 @@
 import load_data
-from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, TextFace
+from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, TextFace, PhyloTree
 import numpy as np
-
 schema_names = COLOR_SCHEMES.keys()
 
 
@@ -18,7 +17,7 @@ def abbreaviate_name(name):
 
 
 class ProfilesLayout:
-    def __init__(self, profile_file, ground_truth_file, scaling,labels, layt, sample_of_interest=None, normalize=False):
+    def __init__(self, profile_file, ground_truth_file, scaling, labels, layt, sample_of_interest=None, normalize=False):
         self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
         self.ground_truth_dict = dict()
         if ground_truth_file is not None:
@@ -28,8 +27,13 @@ class ProfilesLayout:
         self.labels=labels
         self.layt=layt
 
+
+    def get_sampleIDs(self):
+        return self.profile_dict.keys()
+
     def get_tax_ids(self, prfl_dict, sample=None):
         all_taxids = set()
+
         if sample in prfl_dict.keys():
             predictions = prfl_dict[sample]['predictions']
             for prediction in predictions:
@@ -56,61 +60,139 @@ class ProfilesLayout:
         all_taxids.update(self.get_tax_ids(self.ground_truth_dict, sample))
         return all_taxids
 
-    def predictions_to_tax_id(self, predictions):
+
+    def predictions_to_tax_id(self, type, sample=None):
+
         tax_id_to_percentage = dict()
-        for prediction in predictions:
-            tax_id = prediction.taxid
-            percentage = prediction.percentage
-            tax_id_to_percentage[tax_id] = 100*percentage  # TODO: so they are fractions, not probabilities
+
+        if type == 'profile':
+            sample_dict = self.profile_dict
+        else:
+            sample_dict = self.ground_truth_dict
+
+        samples = sample_dict.keys()
+        if sample is not None:
+            samples = [sample]
+
+
+        merged_predictions = dict()
+
+        for sample_id in samples:
+            predictions = sample_dict[sample_id]['predictions']
+
+            for prediction in predictions:
+                tax_id = prediction.taxid
+
+                if tax_id not in tax_id_to_percentage:
+                    tax_id_to_percentage[tax_id] = dict()
+                    merged_predictions[tax_id]=[]
+                merged_predictions[tax_id].append(prediction.percentage*100) # TODO: so they are fractions, not probabilities
+                tax_id_to_percentage[tax_id]['rank'] = prediction.rank
+                tax_id_to_percentage[tax_id]['taxpath'] = prediction.taxpath
+                tax_id_to_percentage[tax_id]['taxpathsn'] = prediction.taxpathsn
+
+
+        for tax_id in merged_predictions.keys():
+            values = merged_predictions[tax_id]
+            tax_id_to_percentage[tax_id]['percentage'] =  np.mean(values)
+
         return tax_id_to_percentage
 
-    def make_tax_id_to_percentage(self, sample=None, merge=False):
+
+    def make_tax_id_to_percentage(self, sample=None):
 
         self.profile_tax_id_to_percentage = dict()
         self.ground_truth_tax_id_to_percentage = dict()
-        if sample is not None:
-            # populate for the profile
-            predictions = self.profile_dict[sample]['predictions']
-            self.profile_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
-
-            # populate for the ground truth
-            if sample in self.ground_truth_dict.keys():
-                predictions = self.ground_truth_dict[sample]['predictions']
-                self.ground_truth_tax_id_to_percentage = self.predictions_to_tax_id(predictions)
-        else:  # otherwise, take the average
-
-            merged_predictions = dict()
-
-            for sample in self.profile_dict.keys():
-                predictions = self.profile_dict[sample]['predictions']
-                for prediction in predictions:
-                    if prediction.taxid not in merged_predictions:
-                        merged_predictions[prediction.taxid]=[]
-                    merged_predictions[prediction.taxid].append(prediction.percentage)
-
-            for taxid in merged_predictions.keys():
-                values = merged_predictions[taxid]
-                merged_predictions[taxid] = np.mean(values)
-
-            self.profile_tax_id_to_percentage = merged_predictions
+        self.profile_tax_id_to_percentage = self.predictions_to_tax_id('profile', sample)
+        self.ground_truth_tax_id_to_percentage = self.predictions_to_tax_id('ground_truth', sample)
 
 
-            merged_predictions = dict()
+    def get_taxpath(self, tax_id):
 
-            for sample in self.ground_truth_dict.keys():
-                predictions = self.ground_truth_dict[sample]['predictions']
-                for prediction in predictions:
-                    if prediction.taxid not in merged_predictions:
-                        merged_predictions[prediction.taxid]=[]
-                    merged_predictions[prediction.taxid].append(prediction.percentage)
+        if tax_id in self.profile_tax_id_to_percentage.keys():
+            return list(self.profile_tax_id_to_percentage[tax_id]['taxpath'].split('|'))
 
-            for taxid in merged_predictions.keys():
-                values = merged_predictions[taxid]
-                merged_predictions[taxid] = np.mean(values)
+        if tax_id in self.ground_truth_tax_id_to_percentage.keys():
+            return list(self.ground_truth_tax_id_to_percentage[tax_id]['taxpath'].split('|'))
+
+        return []
+
+    def get_rank(self, tax_id):
+
+        if tax_id in self.profile_tax_id_to_percentage.keys():
+            return self.profile_tax_id_to_percentage[tax_id]['rank']
+
+        if tax_id in self.ground_truth_tax_id_to_percentage.keys():
+            return self.ground_truth_tax_id_to_percentage[tax_id]['rank']
+
+        return "no rank"
+
+    def get_name(self, tax_id):
+
+        if tax_id in self.profile_tax_id_to_percentage.keys():
+            return self.profile_tax_id_to_percentage[tax_id]['taxpathsn'].split('|')[-1]
+
+        if tax_id in self.ground_truth_tax_id_to_percentage.keys():
+            return self.ground_truth_tax_id_to_percentage[tax_id]['taxpathsn'].split('|')[-1]
+
+        return "no sci_name"
 
 
-            self.ground_truth_tax_id_to_percentage = merged_predictions
+    def build_tree(self, sample, rank_limit=None):
 
+        # Gets taxids of sample.  Gets all taxids if sample is None.
+        taxids = set(self.get_all_tax_ids(sample))
+
+        taxid2nodes = {}
+        all_nodes = {}
+        root_children = []
+
+        for taxid in taxids:
+            taxid2nodes[taxid] = []
+
+            taxpath = self.get_taxpath(taxid)
+
+            for node_id in taxpath:
+                if node_id != '':
+                    if node_id not in all_nodes:
+                        node = all_nodes.setdefault(node_id, PhyloTree())
+                        node.name = str(node_id)
+                        node.taxid = node_id
+                        rank = self.get_rank(node_id)
+                        node.add_feature("rank", rank)
+                        node.add_feature("sci_name", self.get_name(node_id))
+
+                        if rank == 'superkingdom':
+                            root_children.append(node)
+                    else:
+                        node = all_nodes[node_id] # node already exists
+
+                    taxid2nodes[taxid].append(node)
+
+        # generate parent child relationships
+        for taxid in taxid2nodes.keys():
+            parent = None
+            for node in taxid2nodes[taxid]:
+                if parent and node not in parent.children:
+                    parent.add_child(node)
+                if rank_limit and node.rank == rank_limit:
+                    break
+                parent = node
+
+        root = PhyloTree()
+        root.name = 'root'
+        root.taxid = '0'
+        root.add_feature("rank", "root")
+        root.add_feature("sci_name", "root")
+
+        for child in root_children:
+            root.add_child(child)
+
+        tree = root
+        if len(root.children) == 1:
+            tree = root.children[0].detach()
+
+        return tree
 
     def layout(self, node):
         #if not node.is_leaf():
@@ -118,27 +200,27 @@ class ProfilesLayout:
         eps = .000000001
         node_taxid = str(node.taxid)
 
-        if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid] > 0.:
+        if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid]['percentage'] > 0.:
             if  (scale=="log"):
-                size_profile = np.log(self.profile_tax_id_to_percentage[node_taxid])
+                size_profile = np.log(self.profile_tax_id_to_percentage[node_taxid]['percentage'])
             elif(scale=="sqrt"):
-                size_profile = np.sqrt(self.profile_tax_id_to_percentage[node_taxid])
+                size_profile = np.sqrt(self.profile_tax_id_to_percentage[node_taxid]['percentage'])
             elif(scale=="exponent"):
-                size_profile = np.exp(self.profile_tax_id_to_percentage[node_taxid])
+                size_profile = np.exp(self.profile_tax_id_to_percentage[node_taxid]['percentage'])
             elif(scale=="linear"):
-                size_profile = (self.profile_tax_id_to_percentage[node_taxid])
+                size_profile = (self.profile_tax_id_to_percentage[node_taxid]['percentage'])
         else:
             size_profile = eps
 
-        if node_taxid in self.ground_truth_tax_id_to_percentage and self.ground_truth_tax_id_to_percentage[node_taxid] > 0.:
+        if node_taxid in self.ground_truth_tax_id_to_percentage and self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'] > 0.:
             if  (scale=="log"):
-                size_ground_truth = np.log(self.ground_truth_tax_id_to_percentage[node_taxid])
+                size_ground_truth = np.log(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])
             elif(scale=="sqrt"):
-                size_ground_truth = np.sqrt(self.ground_truth_tax_id_to_percentage[node_taxid])
+                size_ground_truth = np.sqrt(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])
             elif(scale=="exponent"):
-                size_ground_truth = np.exp(self.ground_truth_tax_id_to_percentage[node_taxid])
+                size_ground_truth = np.exp(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])
             elif(scale=="linear"):
-                size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid])
+                size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])
         else:
             size_ground_truth = eps
 
