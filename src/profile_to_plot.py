@@ -26,6 +26,8 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
 
     # Make the ETE3 tree
     try:
+        # Change the PF object so that it contains a less number of nodes
+        # If the number of leaves is small. we don't need cleaning. Keep in mind the user command line option for making the new PF
         tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
 
     except:

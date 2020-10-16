@@ -3,13 +3,13 @@ from setuptools import setup, find_packages
 with open('requirements.txt') as f: 
 	requirements = f.readlines() 
 
-with open("README.md", "r") as fh:
+with open("project_description.md", "r") as fh:
     long_description = fh.read()
 
 setup( 
 	package='src',	
 	name='CAMIViz',  
-	version='0.1',
+	version='0.1.0',
 	author="David Koslicki",
 	author_email="dmk333@psu.edu",
 	url="https://github.com/dkoslicki/CAMIProfilingVisualization",

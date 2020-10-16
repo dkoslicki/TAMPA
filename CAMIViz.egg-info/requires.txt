@@ -3,3 +3,4 @@ seaborn
 pandas
 matplotlib
 ete3
+biom-format

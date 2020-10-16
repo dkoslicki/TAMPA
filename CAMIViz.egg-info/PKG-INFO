@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: CAMIViz
-Version: 0.1
+Version: 0.1.0
 Summary: A collection of tools to visualize CAMI profiling outputs
 Home-page: https://github.com/dkoslicki/CAMIProfilingVisualization
 Author: David Koslicki
@@ -23,8 +23,7 @@ Description: # CAMIProfilingVisualization
         ```bash
         python src/profile_to_plot.py -i data/prediction_multi.profile -g data/ground_truth_multi.profile -b test -s sample_0 genus
         ```
-        This should result in a plot that looks like:
-        ![](data/test_tree_genus.png)
+        This should result in a plot that visually represents the relative abundance of the taxonomic profiles produced by numerous taxonomic profiling methods. An example plot can be found [here](https://github.com/dkoslicki/CAMIProfilingVisualization/blob/master/data/test_tree_genus.png)
         
 Keywords: profile_to_plot src python package
 Platform: UNKNOWN

@@ -142,17 +142,17 @@ class ProfilesLayout:
         else:
             size_ground_truth = eps
 
-        size = 25*max([size_ground_truth, size_profile])
+        size = 50*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])
         # print(np.sum(chart_sizes))
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
             if(self.labels=="All"):
-                F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=20)  # use the scientific name
+                F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=500)  # use the scientific name
                 faces.add_face_to_node(F2, node, column=0, position="branch-right")
             elif(self.labels=="Leaf"):
                 if node.is_leaf():
-                    F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=20)  # use the scientific name
+                    F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=500)  # use the scientific name
                     faces.add_face_to_node(F2, node, column=0, position="branch-right")
             # print(chart_sizes)
 
