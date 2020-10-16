@@ -19,24 +19,20 @@ def abbreaviate_name(name):
 
 
 class ProfilesLayout:
-    def __init__(self, scaling, labels, layt, sample_of_interest=None):
+    def __init__(self, profile_file, ground_truth_file, scaling, labels, layt, sample_of_interest=None, normalize=False):
 
-        self.profile_dict = dict()
+        self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
+
         self.ground_truth_dict = dict()
+        if ground_truth_file is not None:
+            self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
+
         self.sample_of_interest = sample_of_interest
         self.scaling=scaling
         self.labels=labels
         self.layt=layt
 
-
-    def load_data(self, profile_file, ground_truth_file, normalize=False):
-
-        self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
-
-        if ground_truth_file is not None:
-            self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
-
-        if self.sample_of_interest == "merged":
+        if sample_of_interest == "merged":
             self.create_merged_sample(self.profile_dict)
             self.create_merged_sample(self.ground_truth_dict)
 
