@@ -8,39 +8,37 @@ schema_names = COLOR_SCHEMES.keys()
 def abbreaviate_name(name):
 
     names = name.split(' ')
-    abr_name = names[0][0]+'.'
+    abbr_name = names[0][0]+'.'
     if len(names) > 1:
         for i in range(1,len(names)):
-            abr_name += ' '+names[i]
+            abbr_name += ' '+names[i]
     else:
         return name
-    return abr_name
-
+    return abbr_name
 
 
 class ProfilesLayout:
-    def __init__(self, profile_file, ground_truth_file, scaling, labels, layt, sample_of_interest=None, normalize=False):
+    def __init__(self, profile_file, ground_truth_file, scaling, labels, layt, normalize=False):
 
-        self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
-
+        self.profile_dict = dict()
         self.ground_truth_dict = dict()
-        if ground_truth_file is not None:
-            self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
-
-        self.sample_of_interest = sample_of_interest
         self.scaling=scaling
         self.labels=labels
         self.layt=layt
+        self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
 
-        if sample_of_interest == "merged":
-            self.create_merged_sample(self.profile_dict)
-            self.create_merged_sample(self.ground_truth_dict)
-
+        if ground_truth_file is not None:
+            self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
 
     def get_sampleIDs(self):
         return self.profile_dict.keys()
 
-    def create_merged_sample(self, sample_dict):
+    def create_merged_sample(self):
+        self.merge_samples(self.profile_dict)
+        self.merge_samples(self.ground_truth_dict)
+
+
+    def merge_samples(self, sample_dict):
 
         merged_predictions = dict()
         samples = sample_dict.keys()
@@ -124,7 +122,7 @@ class ProfilesLayout:
         for prediction in predictions:
             tax_id = prediction.taxid
             tax_id_to_percentage[tax_id] = dict()
-            tax_id_to_percentage[tax_id]['percentage'] = prediction.percentage*100 # TODO: so they are fractions, not probabilities
+            tax_id_to_percentage[tax_id]['percentage'] = 100*prediction.percentage # TODO: so they are fractions, not probabilities
             tax_id_to_percentage[tax_id]['rank'] = prediction.rank
             tax_id_to_percentage[tax_id]['taxpath'] = prediction.taxpath
             tax_id_to_percentage[tax_id]['taxpathsn'] = prediction.taxpathsn
@@ -227,6 +225,9 @@ class ProfilesLayout:
 
         return tree
 
+
+
+
     def layout(self, node):
         #if not node.is_leaf():
         scale=self.scaling
@@ -257,7 +258,6 @@ class ProfilesLayout:
         else:
             size_ground_truth = eps
 
-        print(size_profile, size_ground_truth)
 
         size = 50*max([size_ground_truth, size_profile])
         chart_sizes = np.array([size_profile, size_ground_truth])
@@ -271,15 +271,12 @@ class ProfilesLayout:
                 if node.is_leaf():
                     F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=500)  # use the scientific name
                     faces.add_face_to_node(F2, node, column=0, position="branch-right")
-            # print(chart_sizes)
 
             if(self.layt=="Pie"):  # PIE CHART
                 F = faces.PieChartFace(chart_sizes,colors=['#1b9e77', '#d95f02'],width=size, height=size)
 
             elif(self.layt=="Bar"):# BAR CHART
-                F = faces.BarChartFace(chart_sizes, deviations=None, labels=None, colors=['#1b9e77', '#d95f02'],width=50, height=50, label_fsize=0, scale_fsize=0)
-
-                #print(chart_sizes, node.sci_name)
+                F = faces.BarChartFace(chart_sizes, deviations=None, labels=None, colors=['#1b9e77', '#d95f02'], width=50, height=50, label_fsize=0, scale_fsize=0)
 
             elif(self.layt=="Circle"): #TWO CIRCLES SIDE BY SIDE
                 F=faces.CircleFace(radius=size_profile*10, color="#1b9e77", style='circle', label=None)
@@ -289,6 +286,7 @@ class ProfilesLayout:
                 faces.add_face_to_node(F1, node, 0, position="float-behind")
 
             elif(self.layt=="Rectangle"): #TWO CIRCLES SIDE BY SIDE
+
                 F=faces.RectFace(width=size_profile*40, height=40, fgcolor="#1b9e77",bgcolor="#1b9e77", label=None)
                 F1=faces.RectFace(width=size_ground_truth*40, height=40, fgcolor="#d95f02",bgcolor="#d95f02", label=None)
                 F1.border.width = None

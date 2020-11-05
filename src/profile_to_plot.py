@@ -1,6 +1,6 @@
 from ete3 import NCBITaxa, is_taxadb_up_to_date
 from ProfilesLayout import ProfilesLayout
-from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace
+from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace, PhyloTree
 import argparse
 import os
 #os.environ['QT_QPA_PLATFORM']='offscreen'
@@ -10,12 +10,96 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 
-import faulthandler
 
 ncbi = NCBITaxa()
 
+def myComparator(n):
 
-def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile):
+    return n.percentage
+
+def add_percentage(tree, PF):
+
+    root = tree
+    for node in root.get_descendants():
+
+        if str(node.taxid) in PF.profile_tax_id_to_percentage and PF.profile_tax_id_to_percentage[str(node.taxid)]['percentage'] > 0.:
+            node.add_feature("percentage", PF.profile_tax_id_to_percentage[str(node.taxid)]['percentage'])
+        else:
+            node.add_feature("percentage", .000000001)
+
+    return root
+
+def get_top_nodes(tree, N=0):
+
+    nodes_to_remove = set()
+
+    root = tree
+
+    if len(root.children) > N:
+        children = []
+        for child in root.children:
+            children.append(child)
+
+        children.sort(reverse=True, key=myComparator)
+
+        for i in range(N, len(children)):
+            nodes_to_remove.add(children[i].taxid)
+            for child in children[i].get_descendants():
+                nodes_to_remove.add(child.taxid)
+
+
+    for n in root.get_descendants():
+
+        if n.taxid not in nodes_to_remove and len(n.children) > N:
+
+            children = []
+            for child in n.children:
+                children.append(child)
+
+            children.sort(reverse=True, key=myFunc)
+
+            for i in range(N, len(children)):
+                nodes_to_remove.add(children[i].taxid)
+                for child in children[i].get_descendants():
+                    nodes_to_remove.add(child.taxid)
+
+
+    for n in root.get_descendants():
+
+        if n.taxid in nodes_to_remove:
+            n.delete(prevent_nondicotomic=False)
+
+    return root
+
+
+
+def get_nodes_by_threshold(tree, thr=0.):
+
+    nodes_to_remove = set()
+    root = tree
+
+    for n in root.get_descendants():
+        #print(n.sci_name, n.percentage, n.rank)
+        #print(n.percentage, thr)
+        if n.taxid not in nodes_to_remove:
+            if n.percentage is not None and n.percentage < thr:
+                nodes_to_remove.add(n.taxid)
+                for child in n.get_descendants():
+                    #print(n.sci_name, child.sci_name, n.percentage)
+                    nodes_to_remove.add(child.taxid)
+
+
+
+    for n in root.get_descendants():
+
+        if n.taxid in nodes_to_remove:
+            n.delete(prevent_nondicotomic=False)
+
+    return root
+
+
+
+def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile, limit=None, limit_value=None):
 
 
     PF.make_tax_id_to_percentage(sample=sample)
@@ -27,10 +111,18 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
         else:
             # Make the ETE3 tree
             tree = ncbi.get_topology(PF.get_all_tax_ids(sample), rank_limit=rank)
+
+        tree = add_percentage(tree, PF)
     except:
         logging.getLogger('Tampa').critical("Input format not compatible.")
         exit(1)
 
+    if limit == "top":
+        tree = get_top_nodes(tree, N=limit_value)
+    elif limit == "threshold":
+        tree = get_nodes_by_threshold(tree, thr=limit_value)
+
+    #print_nodes(tree)
     ts = TreeStyle()
     ts.layout_fn = PF.layout
     ts.mode = "c"
@@ -39,19 +131,21 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.show_branch_support = False
     ts.min_leaf_separation = 10
     ts.arc_span = 360
-    #ts.legend.add_face(CircleFace(100, "#1b9e77", label="Predicted"), column=0)
-    #ts.legend.add_face(CircleFace(100, '#d95f02', label="True"), column=1)
+    ts.allow_face_overlap = False  # this lets me mess a bit with font size and face size without the interaction of the two
+
     # add white space to move the legend closer
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=0)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(65, "#FFFFFF"), column=0)
+    circle_size = 50
+    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=0)
+
 
     # add the legend
-    legend_fs = 50
-    C1 = CircleFace(100, "#1b9e77")
+    legend_fs = 500
+    C1 = CircleFace(500, "#1b9e77")
     C1.hz_align = True
     ts.legend.add_face(C1, column=0)
     T1 = TextFace("Predicted", fsize=legend_fs)
@@ -59,7 +153,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.legend.add_face(T1, column=0)
 
     if len(PF.ground_truth_dict) > 0:
-        C2 = CircleFace(100, "#d95f02")
+        C2 = CircleFace(500, "#d95f02")
         C2.hz_align = True
         ts.legend.add_face(C2, column=1)
         T2 = TextFace("True", fsize=legend_fs)
@@ -69,8 +163,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     T3 = TextFace(f"Tool: {os.path.basename(input_file).split('.')[0]}", fsize=legend_fs)
     T3.hz_align = True
     ts.legend.add_face(T3, column=0)
-    ts.allow_face_overlap = False  # this lets me mess a bit with font size and face size without the interaction of the two
-    ts.min_leaf_separation = 10
+
     tree_output_file = f"{output_base_name}_tree_{rank}_{sample}.{file_type}"
     tree.render(tree_output_file, h=5.2, w=5, tree_style=ts, units="in", dpi=output_dpi)
 
@@ -137,17 +230,16 @@ def main():
     argparser.add_argument('-d', '--db_file', type=str, default='', help="specify database dump file")
     argparser.add_argument('-r', '--res', type=str, default='800', help="specify the resolution (dpi)")
     argparser.add_argument('-p', '--profile', action='store_true', help="specify this option to use only the input profile(s) taxID's to construct the tree")
+    argparser.add_argument('-top', '--top', type=str, help="specify this option to display only the top nodes with highest abundance")
+    argparser.add_argument('-thr', '--thr', type=str, help="specify this option to display only the nodes with abundance higher than threshold")
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
 
 
     # Parse the parameters
     params = argparser.parse_args()
     rank = params.taxonomic_rank
-    #input_file = "/home/dkoslicki/Data/CAMI2/meta_coder_analysis/profiles/marine_short/MS15.profile"
     input_file = params.input_profile
-    #ground_truth = "/home/dkoslicki/Data/CAMI2/meta_coder_analysis/profiles/marine_short/gs_marine_short.profile"
     ground_truth = params.ground_truth_input_profile
-    #sample_of_interest = 'marmgCAMI2_short_read_sample_0'
     sample_of_interest = params.sample_of_interest
     scaling=params.scaling
     labels=params.labels
@@ -160,6 +252,15 @@ def main():
     db_file=params.db_file
     output_dpi=int(params.res)
     use_profile = params.profile
+    limit = None
+    limit_value = None
+    if params.top is not None:
+        limit="top"
+        limit_value=int(params.top)
+    elif params.thr is not None:
+        limit="threshold"
+        limit_value=float(params.thr)
+
 
 
     # updates the ncbi taxdump database
@@ -174,22 +275,21 @@ def main():
             exit(1)
 
 
+    # ingest the profiles information
+    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, layt, normalize=normalize)
 
     if sample_of_interest:
         sample_keys =  [sample_of_interest]
     elif merge:
+        PF.create_merged_sample()
         sample_keys = ["merged"] #if merge is selected, then combine all samples into single merged sample
         sample_of_interest = "merged"
     else:
         sample_keys = PF.get_sampleIDs()
 
-    # ingest the profiles information
-    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, layt, sample_of_interest=sample_of_interest, normalize=normalize)
-
-
     #create a figure for each key on key_samples
     for sample in sample_keys:
-        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile)
+        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile, limit, limit_value)
 
 
 if __name__ == "__main__": main()
