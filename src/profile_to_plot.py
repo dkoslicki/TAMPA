@@ -1,6 +1,6 @@
 from ete3 import NCBITaxa, is_taxadb_up_to_date
 from ProfilesLayout import ProfilesLayout
-from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace, PhyloTree
+from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace, PhyloTree, NodeStyle
 import argparse
 import os
 #os.environ['QT_QPA_PLATFORM']='offscreen'
@@ -26,6 +26,7 @@ def add_percentage(tree, PF):
             node.add_feature("percentage", PF.profile_tax_id_to_percentage[str(node.taxid)]['percentage'])
         else:
             node.add_feature("percentage", .000000001)
+        #print(node.name, node.percentage)
 
     return root
 
@@ -79,13 +80,11 @@ def get_nodes_by_threshold(tree, thr=0.):
     root = tree
 
     for n in root.get_descendants():
-        #print(n.sci_name, n.percentage, n.rank)
-        #print(n.percentage, thr)
+
         if n.taxid not in nodes_to_remove:
             if n.percentage is not None and n.percentage < thr:
                 nodes_to_remove.add(n.taxid)
                 for child in n.get_descendants():
-                    #print(n.sci_name, child.sci_name, n.percentage)
                     nodes_to_remove.add(child.taxid)
 
 
@@ -99,7 +98,7 @@ def get_nodes_by_threshold(tree, thr=0.):
 
 
 
-def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile, limit=None, limit_value=None):
+def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile, fw, fh, limit=None, limit_value=None):
 
 
     PF.make_tax_id_to_percentage(sample=sample)
@@ -122,30 +121,40 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     elif limit == "threshold":
         tree = get_nodes_by_threshold(tree, thr=limit_value)
 
-    #print_nodes(tree)
+    # removes the default node labels
+    nstyle = NodeStyle()
+    nstyle["fgcolor"] = "#FFFFFF"
+    nstyle["size"] = 0
+
+    for n in tree.traverse():
+        n.set_style(nstyle)
+
+
     ts = TreeStyle()
     ts.layout_fn = PF.layout
     ts.mode = "c"
     ts.show_leaf_name = False
     ts.show_branch_length = False
     ts.show_branch_support = False
-    ts.min_leaf_separation = 10
+    ts.min_leaf_separation = PF.get_leaf_separation()
     ts.arc_span = 360
-    ts.allow_face_overlap = False  # this lets me mess a bit with font size and face size without the interaction of the two
-
-    # add white space to move the legend closer
-    circle_size = 50
-    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=0)
-    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=2)
-    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=1)
-    ts.legend.add_face(CircleFace(circle_size, "#FFFFFF"), column=0)
-
+    ts.allow_face_overlap = False
+    ts.branch_vertical_margin = PF.get_branch_margin()
+    ts.show_scale = False
 
     # add the legend
-    legend_fs = 500
-    C1 = CircleFace(500, "#1b9e77")
+    legend_fs = PF.get_font_size()
+    label_size = PF.get_label_size()
+
+    # add white space to move the legend closer
+    ts.legend.add_face(CircleFace(label_size, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(label_size, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(label_size, "#FFFFFF"), column=0)
+    ts.legend.add_face(CircleFace(label_size, "#FFFFFF"), column=2)
+    ts.legend.add_face(CircleFace(label_size, "#FFFFFF"), column=1)
+    ts.legend.add_face(CircleFace(label_size, "#FFFFFF"), column=0)
+
+    C1 = CircleFace(label_size, "#1b9e77")
     C1.hz_align = True
     ts.legend.add_face(C1, column=0)
     T1 = TextFace("Predicted", fsize=legend_fs)
@@ -153,7 +162,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.legend.add_face(T1, column=0)
 
     if len(PF.ground_truth_dict) > 0:
-        C2 = CircleFace(500, "#d95f02")
+        C2 = CircleFace(label_size, "#d95f02")
         C2.hz_align = True
         ts.legend.add_face(C2, column=1)
         T2 = TextFace("True", fsize=legend_fs)
@@ -165,7 +174,7 @@ def generateFigure(PF, sample, rank, input_file, output_base_name, file_type, pl
     ts.legend.add_face(T3, column=0)
 
     tree_output_file = f"{output_base_name}_tree_{rank}_{sample}.{file_type}"
-    tree.render(tree_output_file, h=5.2, w=5, tree_style=ts, units="in", dpi=output_dpi)
+    tree.render(tree_output_file, h=fh, w=fw, tree_style=ts, units="in", dpi=output_dpi)
 
 
     if plot_l1:
@@ -232,6 +241,13 @@ def main():
     argparser.add_argument('-p', '--profile', action='store_true', help="specify this option to use only the input profile(s) taxID's to construct the tree")
     argparser.add_argument('-top', '--top', type=str, help="specify this option to display only the top nodes with highest abundance")
     argparser.add_argument('-thr', '--thr', type=str, help="specify this option to display only the nodes with abundance higher than threshold")
+    argparser.add_argument('-fs', '--fontsize', type=str, default='12', help="specify this option to change the font size of the labels")
+    argparser.add_argument('-ls', '--labelsize', type=str, default='20', help="specify this option to display only the nodes with abundance higher than threshold")
+    argparser.add_argument('-lw', '--labelwidth', type=str, default='8', help="specify this option to display only the nodes with abundance higher than threshold")
+    argparser.add_argument('-bm', '--branchmargin', type=str, default='0', help="specify this option to change the branch vertical margin")
+    argparser.add_argument('-lsep', '--leaf_sep', type=str, default='10', help="specify this option to change the leaf separation")
+    argparser.add_argument('-fh', '--figheight', type=str, default='5.2', help="specify this option to change the figure height (in)")
+    argparser.add_argument('-fw', '--figwidth', type=str, default='5', help="specify this option to change the figure width (in)")
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
 
 
@@ -260,7 +276,13 @@ def main():
     elif params.thr is not None:
         limit="threshold"
         limit_value=float(params.thr)
-
+    fs = float(params.fontsize)
+    ls = float(params.labelsize)
+    bm = int(params.branchmargin)
+    lw = float(params.labelwidth)
+    fw = float(params.figwidth)
+    fh = float(params.figheight)
+    lsep = float(params.leaf_sep)
 
 
     # updates the ncbi taxdump database
@@ -276,20 +298,20 @@ def main():
 
 
     # ingest the profiles information
-    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, layt, normalize=normalize)
+    PF = ProfilesLayout(input_file, ground_truth, scaling, labels, layt, normalize=normalize, fs=fs, ls=ls, bm=bm, lw=lw, lsep=lsep)
 
     if sample_of_interest:
         sample_keys =  [sample_of_interest]
     elif merge:
-        PF.create_merged_sample()
-        sample_keys = ["merged"] #if merge is selected, then combine all samples into single merged sample
+        PF.create_merged_sample() #if merge is selected, then combine all samples into single merged sample
+        sample_keys = ["merged"]
         sample_of_interest = "merged"
     else:
         sample_keys = PF.get_sampleIDs()
 
     #create a figure for each key on key_samples
     for sample in sample_keys:
-        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile, limit, limit_value)
+        generateFigure(PF, sample, rank, input_file, output_base_name, file_type, plot_l1, scaling, output_dpi, use_profile, fw, fh, limit, limit_value)
 
 
 if __name__ == "__main__": main()
