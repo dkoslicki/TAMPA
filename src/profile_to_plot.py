@@ -248,11 +248,14 @@ def main():
     argparser.add_argument('-lsep', '--leaf_sep', type=str, default='10', help="specify this option to change the leaf separation")
     argparser.add_argument('-fh', '--figheight', type=str, default='5.2', help="specify this option to change the figure height (in)")
     argparser.add_argument('-fw', '--figwidth', type=str, default='5', help="specify this option to change the figure width (in)")
+    argparser.add_argument('-nm', '--no_monitor', action='store_true', help='If you are running on a server or other monitor-less environment, use this flag to save directly to a file')
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
 
 
     # Parse the parameters
     params = argparser.parse_args()
+    if params.no_monitor:
+        os.environ['QT_QPA_PLATFORM']='offscreen'
     rank = params.taxonomic_rank
     input_file = params.input_profile
     ground_truth = params.ground_truth_input_profile
