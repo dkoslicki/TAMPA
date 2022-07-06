@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from ete3 import NCBITaxa, is_taxadb_up_to_date
 from ProfilesLayout import ProfilesLayout
 from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace, PhyloTree, NodeStyle
