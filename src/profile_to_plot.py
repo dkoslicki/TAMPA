@@ -58,7 +58,7 @@ def get_top_nodes(tree, N=0):
             for child in n.children:
                 children.append(child)
 
-            children.sort(reverse=True, key=myFunc)
+            children.sort(reverse=True, key=myComparator)
 
             for i in range(N, len(children)):
                 nodes_to_remove.add(children[i].taxid)
