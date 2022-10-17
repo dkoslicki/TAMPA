@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from ete3 import NCBITaxa, is_taxadb_up_to_date
 from ProfilesLayout import ProfilesLayout
 from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, CircleFace, TextFace, PhyloTree, NodeStyle
@@ -57,7 +58,7 @@ def get_top_nodes(tree, N=0):
             for child in n.children:
                 children.append(child)
 
-            children.sort(reverse=True, key=myFunc)
+            children.sort(reverse=True, key=myComparator)
 
             for i in range(N, len(children)):
                 nodes_to_remove.add(children[i].taxid)
@@ -252,6 +253,7 @@ def main():
     argparser.add_argument('-lsep', '--leaf_sep', type=str, default='10', help="specify this option to change the leaf separation")
     argparser.add_argument('-fh', '--figheight', type=str, default='5.2', help="specify this option to change the figure height (in)")
     argparser.add_argument('-fw', '--figwidth', type=str, default='5', help="specify this option to change the figure width (in)")
+    argparser.add_argument('-nm', '--no_monitor', action='store_true', help='If you are running on a server or other monitor-less environment, use this flag to save directly to a file')
     argparser.add_argument('taxonomic_rank', type=str, help='Taxonomic rank to do the plotting at')
     argparser.add_argument('-o', '--output_path', type=str, help='Output path')
     argparser.add_argument('-dt', '--highlight_differences_threshold', type=str, default='10',help="If at any rank the two input samples have a difference in abundance greater than or equal to N%, this taxa will be highlighted")
@@ -260,6 +262,8 @@ def main():
     # argparser.add_argument('-sec', '--input2', type=str,help="Name of the second input")
     # Parse the parameters
     params = argparser.parse_args()
+    if params.no_monitor:
+        os.environ['QT_QPA_PLATFORM']='offscreen'
     rank = params.taxonomic_rank
     output_path=params.output_path
     input_file = params.input_profile

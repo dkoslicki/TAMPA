@@ -148,7 +148,6 @@ class ProfilesLayout:
             sample_dict = self.ground_truth_dict
 
         merged_predictions = dict()
-
         predictions = sample_dict[sample]['predictions']
 
         for prediction in predictions:
@@ -167,6 +166,7 @@ class ProfilesLayout:
         self.profile_tax_id_to_percentage = dict()
         self.ground_truth_tax_id_to_percentage = dict()
         self.profile_tax_id_to_percentage = self.predictions_to_tax_id('profile', sample)
+
         if((self.profile_dict1!='0')):
             self.profile_tax_id_to_percentage1 = self.predictions_to_tax_id('profile1', sample)
         else:
