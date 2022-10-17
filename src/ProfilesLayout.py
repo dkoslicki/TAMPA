@@ -18,9 +18,10 @@ def abbreaviate_name(name):
 
 
 class ProfilesLayout:
-    def __init__(self, profile_file, ground_truth_file, scaling, labels, layt, normalize=False, fs=500, ls=1., bm=0, lw=1., lsep=10):
+    def __init__(self, profile_file, profile_file1, ground_truth_file, scaling, labels, layt, contrast, normalize=False, fs=500, ls=1., bm=0, lw=1., lsep=10):
 
         self.profile_dict = dict()
+        self.profile_dict1 = dict()
         self.ground_truth_dict = dict()
         self.scaling = scaling
         self.labels = labels
@@ -30,8 +31,14 @@ class ProfilesLayout:
         self.branch_margin = bm
         self.label_width = lw
         self.leaf_separation = lsep
+        self.contrast=contrast
+
 
         self.profile_dict = load_data.open_profile(profile_file, normalize=normalize)
+        if(profile_file1 != '0'):
+            self.profile_dict1 = load_data.open_profile(profile_file1, normalize=normalize)
+        else:
+            self.profile_dict1='0'
 
         if ground_truth_file is not None:
             self.ground_truth_dict = load_data.open_profile(ground_truth_file, normalize=normalize)
@@ -52,10 +59,12 @@ class ProfilesLayout:
         return self.leaf_separation
 
     def get_sampleIDs(self):
-        return self.profile_dict.keys()
+        return self.profile_dict.keys() #check this later
 
     def create_merged_sample(self):
         self.merge_samples(self.profile_dict)
+        if(profile_dict1 != '0'):
+            self.merge_samples(self.profile_dict1)
         self.merge_samples(self.ground_truth_dict)
 
 
@@ -133,6 +142,8 @@ class ProfilesLayout:
 
         if type == 'profile':
             sample_dict = self.profile_dict
+        elif type =='profile1':
+            sample_dict = self.profile_dict1 
         else:
             sample_dict = self.ground_truth_dict
 
@@ -156,6 +167,10 @@ class ProfilesLayout:
         self.profile_tax_id_to_percentage = dict()
         self.ground_truth_tax_id_to_percentage = dict()
         self.profile_tax_id_to_percentage = self.predictions_to_tax_id('profile', sample)
+        if((self.profile_dict1!='0')):
+            self.profile_tax_id_to_percentage1 = self.predictions_to_tax_id('profile1', sample)
+        else:
+            self.profile_tax_id_to_percentage1=0
         self.ground_truth_tax_id_to_percentage = self.predictions_to_tax_id('ground_truth', sample)
 
 
@@ -254,45 +269,82 @@ class ProfilesLayout:
 
 
     def layout(self, node):
-
+        # PART1: set the sizes according to the scale
         scale=self.scaling
         eps = .000000001
         node_taxid = str(node.taxid)
 
+        #node_taxid is a number. This is how we map, instead of the names
+        # if node exists in our database and positive percentage abundance, create node
         if node_taxid in self.profile_tax_id_to_percentage and self.profile_tax_id_to_percentage[node_taxid]['percentage'] > 0.:
             if  (scale=="log"):
                 size_profile = (np.log(self.profile_tax_id_to_percentage[node_taxid]['percentage'])+9.)/11.*self.label_size
+                if(self.profile_tax_id_to_percentage1!=0):
+                    size_profile1 = (np.log(self.profile_tax_id_to_percentage1[node_taxid]['percentage'])+9.)/11.*self.label_size
+                else:
+                    size_profile1=0
+                # print('input=',self.profile_tax_id_to_percentage[node_taxid]['percentage'])
+                # print("output=",size_profile)
             elif(scale=="sqrt"):
                 size_profile = (np.sqrt(self.profile_tax_id_to_percentage[node_taxid]['percentage'])-0.0000316227766)/10*self.label_size
+                if(self.profile_tax_id_to_percentage1!=0):
+                    size_profile1 = (np.sqrt(self.profile_tax_id_to_percentage1[node_taxid]['percentage'])-0.0000316227766)/10*self.label_size
+                else:
+                    size_profile1=0
             elif(scale=="exponent"):
                 size_profile = (np.exp(self.profile_tax_id_to_percentage[node_taxid]['percentage'])-1.000000001)/np.exp(100)*self.label_size
-            elif(scale=="linear"):
-                size_profile = (self.profile_tax_id_to_percentage[node_taxid]['percentage'])/100*self.label_size
+                if(self.profile_tax_id_to_percentage1!=0):
+                    size_profile1 = (np.exp(self.profile_tax_id_to_percentage1[node_taxid]['percentage'])-1.000000001)/np.exp(100)*self.label_size
+                else:
+                    size_profile1=0
+            elif(scale=="linear"):              
+                size_profile = (self.profile_tax_id_to_percentage[node_taxid]['percentage'])
+                if(self.profile_tax_id_to_percentage1!=0):
+                    size_profile1 = (self.profile_tax_id_to_percentage1[node_taxid]['percentage'])
+                else:
+                    size_profile1=0
+                # print('input=',self.profile_tax_id_to_percentage[node_taxid]['percentage'])
+                # print("output=",size_profile)
+                # size_profile = (self.profile_tax_id_to_percentage[node_taxid]['percentage'])/100*self.label_size
+                #size_profile = (self.profile_tax_id_to_percentage[node_taxid]['percentage'])/(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage']+self.profile_tax_id_to_percentage[node_taxid]['percentage'])
         else:
             size_profile = eps
+            size_profile1 = eps
 
         if node_taxid in self.ground_truth_tax_id_to_percentage and self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'] > 0.:
             if  (scale=="log"):
+                # print('log')
                 size_ground_truth = (np.log(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])+9.)/11.*self.label_size
+                # print(size_ground_truth)
             elif(scale=="sqrt"):
                 size_ground_truth = (np.sqrt(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])-0.0000316227766)/10*self.label_size
             elif(scale=="exponent"):
                 size_ground_truth = (np.exp(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])-1.000000001)/np.exp(100)*self.label_size
             elif(scale=="linear"):
-                size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])/100*self.label_size
+                size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])
+                #size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])/(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage']+self.profile_tax_id_to_percentage[node_taxid]['percentage'])
+                #size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])/(self.ground_truth_tax_id_to_percentage[node_taxid]['percentage']+self.profile_tax_id_to_percentage[node_taxid]['percentage'])
+                # size_ground_truth = (self.ground_truth_tax_id_to_percentage[node_taxid]['percentage'])/100*self.label_size
         else:
             size_ground_truth = eps
 
 
 
-
-        chart_sizes = np.array([size_profile, size_ground_truth])
-
+        # PART2: Create the node according to size set above
+        # print("profile1 size=",size_profile1)
+        chart_sizes = np.array([(size_profile*100)/(size_profile+size_ground_truth), (size_profile1*100)/(size_profile1+size_ground_truth), (size_ground_truth*100)/(size_profile+size_ground_truth)])
+        # print("chart sizes=",chart_sizes)
+        # print("sizes",size_ground_truth,size_profile)
+        diff=abs((size_profile*100)/(size_profile+size_ground_truth)- (size_ground_truth*100)/(size_profile+size_ground_truth))
         if not np.sum(chart_sizes) == 0:
             chart_sizes = 100 * (chart_sizes / np.sum(chart_sizes))
 
             if(self.labels=="All"):
-                F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=self.font_size)  # use the scientific name
+                if(diff>30):
+                    # print("hi")
+                    F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=self.font_size,fgcolor="black",bold=False) #change to blue later if needed
+                else:
+                    F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=self.font_size,bold=False)  # use the scientific name
                 faces.add_face_to_node(F2, node, column=0, position="branch-right")
 
             elif(self.labels=="Leaf"):
@@ -301,9 +353,28 @@ class ProfilesLayout:
                     faces.add_face_to_node(F2, node, column=0, position="branch-right")
 
             if(self.layt=="Pie"):  # PIE CHART
-
-                size = max([size_profile, size_ground_truth])
-                F = faces.PieChartFace(chart_sizes,colors=['#1b9e77', '#d95f02'],width=size, height=size)
+                # size=max([size_profile, size_ground_truth])
+                size = max((np.log(size_profile)+21.)/11.*self.label_size,(np.log(size_ground_truth)+21.)/11.*self.label_size)
+                # print(size_profile, size_ground_truth)
+                #size=5*max(np.sqrt(size_ground_truth),np.sqrt(size_profile))
+                if (self.contrast=='True'):
+                    ranges=[100,90,80,70,60,50,40,30,20,10]
+                    colors=['#98FB98','#90EE90','#00FF7F','#00FA9A','#7CFC00','#7FFF00','#32CD32','#228B22','#006400','#556B2F']
+                    if(diff>0 and diff<10):
+                        F = faces.PieChartFace(chart_sizes,colors=['#98FB98', '#000000','#FFFFFF'],width=size, height=size)
+                    elif(diff>10 and diff<25): 
+                        F = faces.PieChartFace(chart_sizes,colors=['#62f062', '#000000','#FFFFFF'],width=size, height=size)
+                    elif(diff>25 and diff<50):
+                        F = faces.PieChartFace(chart_sizes,colors=['#56e356', '#000000','#FFFFFF'],width=size, height=size)
+                    elif(diff>50 and diff<75):
+                        F = faces.PieChartFace(chart_sizes,colors=['#37ad37', '#000000','#FFFFFF'],width=size, height=size)
+                    elif(diff>75 and diff>100):
+                        F = faces.PieChartFace(chart_sizes,colors=['#2b822b', '#000000','#FFFFFF'],width=size, height=size)
+                    else:
+                        F = faces.PieChartFace(chart_sizes,colors=['#FF0000', '#000000','#0000FF'],width=size, height=size)
+                else:
+                    F = faces.PieChartFace(chart_sizes,colors=['#1b9e77', '#0000FF','#d95f02'],width=size, height=size)
+                # F = faces.PieChartFace(chart_sizes,colors=['#1b9e77', '#d95f02'],width=30, height=30)
 
             elif(self.layt=="Circle"): #TWO CIRCLES SIDE BY SIDE
                 F=faces.CircleFace(radius=size_profile, color="#1b9e77", style='circle', label=None)
@@ -313,7 +384,6 @@ class ProfilesLayout:
                 faces.add_face_to_node(F1, node, 0, position="float-behind")
 
             elif(self.layt=="Rectangle"): #TWO CIRCLES SIDE BY SIDE
-
                 F=faces.RectFace(width=size_profile, height=self.label_width, fgcolor="#1b9e77",bgcolor="#1b9e77", label=None)
                 F1=faces.RectFace(width=size_ground_truth, height=self.label_width, fgcolor="#d95f02",bgcolor="#d95f02", label=None)
                 F1.border.width = None
