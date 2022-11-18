@@ -1,5 +1,4 @@
-# TAMPA
-**TA**xono**M**ic **P**rofiling **A**nalysis: A collection of tools to visualize CAMI profiling outputs.
+# TAMPA: **TA**xono**M**ic **P**rofiling **A**nalysis
 
 > This repository contains the official python implementation of the following paper:
 > Sarwal, Varuni, Jaqueline Brito, Serghei Mangul, and David J. Koslicki. **"TAMPA: interpretable analysis and visualization of metagenomics-based taxon abundance profiles."** bioRxiv (2022). <br>
@@ -49,11 +48,11 @@ python src/tampa.py -i data/prediction_multi.profile -g data/ground_truth_multi.
 ```
 This should result in a plot that looks like: 
 
-A compregensive list of visualization options can be obtained using 
+<h1 align="center"><img src="./figures/metaphyler_CAMIhigh_normal_tree_phylum_CAMI_HIGH_S001.png" width="75%"></h1>
+
+A comprehensive list of visualization options can be obtained using 
 ```bash
 python src/tampa.py --help
 ```
-
-<h1 align="center"><img src="./figures/metaphyler_CAMIhigh_normal_tree_phylum_CAMI_HIGH_S001.png" width="75%"></h1>
 
 ###
