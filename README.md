@@ -1,10 +1,27 @@
 # TAMPA
 **TA**xono**M**ic **P**rofiling **A**nalysis: A collection of tools to visualize CAMI profiling outputs.
 
-This repo was previously known as "CAMIProfilingVisualization"
+> This repository contains the official python implementation of the following paper:
+> Sarwal, Varuni, Jaqueline Brito, Serghei Mangul, and David J. Koslicki. **"TAMPA: interpretable analysis and visualization of metagenomics-based taxon abundance profiles."** bioRxiv (2022). <br>
+> [https://www.biorxiv.org/content/10.1101/2022.04.28.489926v1.abstract] (https://www.biorxiv.org/content/10.1101/2022.04.28.489926v1.abstract) <br>
 
-# Installation
-Use conda
+
+## Setup Environment and Install Dependencies
+
+### Clone the repository
+
+```bash
+git clone git@github.com:dkoslicki/TAMPA.git
+cd TAMPA
+```
+
+
+### Installation with Conda
+
+Please follow the instructions at the following link to set up anaconda: [Anaconda Setup](https://docs.anaconda.com/anaconda/install/index.html)
+
+The following commands create a conda environment inside the repository with the dependencies.
+
 ```bash
 conda config --add channels defaults
 conda config --add channels bioconda
@@ -13,9 +30,16 @@ conda create -c etetoolkit -y -n CAMIViz python=3.7 numpy  ete3  seaborn pandas 
 conda activate CAMIViz
 ```
 
-# Example usage
+### Installation with Bioconda
+Waiting for pull request to get merged
+
+
+### Example usage
 ```bash
-python src/profile_to_plot.py -i data/prediction_multi.profile -g data/ground_truth_multi.profile -b test -s sample_0 genus
+python src/tampa.py -i data/prediction_multi.profile -g data/ground_truth_multi.profile phylum -s CAMI_HIGH_S001 -b basename -k linear -r 1600 -o .
 ```
 This should result in a plot that looks like:
-![](data/test_tree_genus.png)
+
+<h1 align="center"><img src="./figures/metaphyler_CAMIhigh_tree_phylum_CAMI_HIGH_S001.png" width="75%"></h1>
+
+###
