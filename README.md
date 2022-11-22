@@ -35,7 +35,7 @@ Waiting for pull request to get merged
 
 ### Example usage
 ```bash
-python src/tampa.py -i data/prediction_multi.profile -g data/ground_truth_multi.profile phylum -s CAMI_HIGH_S001 -b basename -k linear -c False -r 1600 -o .
+python src/tampa.py -i data/mad_yalow_0.profile.txt -g data/gs_marine_short.profile.txt class -s marmgCAMI2_short_read_sample_0 -b marine_test -k linear -r 1600 -c False -o .
 ```
 This should result in a plot that looks like:
 
@@ -44,7 +44,7 @@ This should result in a plot that looks like:
 TAMPA provides a "CONTRAST MODE" to better visualize the differences between the tool and gold standard. The contrast mode can be activated by setting the parameter c to True as follows
 
 ```bash
-python src/tampa.py -i data/prediction_multi.profile -g data/ground_truth_multi.profile phylum -s CAMI_HIGH_S001 -b basename -k linear -c False -r 1600 -o .
+python src/tampa.py -i data/mad_yalow_0.profile.txt -g data/gs_marine_short.profile.txt class -s marmgCAMI2_short_read_sample_0 -b marine_test -k linear -r 1600 -c True -o .
 ```
 This should result in a plot that looks like: 
 
@@ -52,7 +52,7 @@ This should result in a plot that looks like:
 
 A comprehensive list of visualization options can be obtained using 
 ```bash
-python src/tampa.py --help
+python src/tampa.py 
 ```
 
 ###
