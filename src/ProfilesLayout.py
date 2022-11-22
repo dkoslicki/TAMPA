@@ -1,3 +1,4 @@
+from pickle import TRUE
 import load_data
 from  load_data import Prediction
 from ete3 import Tree, faces, TreeStyle, COLOR_SCHEMES, TextFace, PhyloTree
@@ -342,7 +343,7 @@ class ProfilesLayout:
             if(self.labels=="All"):
                 if(diff>30):
                     # print("hi")
-                    F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=self.font_size,fgcolor="black",bold=False) #change to blue later if needed
+                    F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=self.font_size,fgcolor="blue",bold=True) #change to blue later if needed
                 else:
                     F2 = TextFace(abbreaviate_name(node.sci_name), tight_text=True, fsize=self.font_size,bold=False)  # use the scientific name
                 faces.add_face_to_node(F2, node, column=0, position="branch-right")
@@ -368,7 +369,7 @@ class ProfilesLayout:
                         F = faces.PieChartFace(chart_sizes,colors=['#56e356', '#000000','#FFFFFF'],width=size, height=size)
                     elif(diff>50 and diff<75):
                         F = faces.PieChartFace(chart_sizes,colors=['#37ad37', '#000000','#FFFFFF'],width=size, height=size)
-                    elif(diff>75 and diff>100):
+                    elif(diff>75 and diff<99):
                         F = faces.PieChartFace(chart_sizes,colors=['#2b822b', '#000000','#FFFFFF'],width=size, height=size)
                     else:
                         F = faces.PieChartFace(chart_sizes,colors=['#FF0000', '#000000','#0000FF'],width=size, height=size)
