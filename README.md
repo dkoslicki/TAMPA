@@ -54,5 +54,16 @@ A comprehensive list of visualization options can be obtained using
 ```bash
 python src/tampa.py 
 ```
+The options are as follows:
 
+usage: tampa.py [-h] [-i INPUT_PROFILE] [-i1 INPUT_PROFILE1]
+                [-g GROUND_TRUTH_INPUT_PROFILE] [-b OUTPUT_BASE_NAME]
+                [-t FILE_TYPE] [-s SAMPLE_OF_INTEREST] [-k SCALING]
+                [-a LABELS] [-y LAYOUT] [-l] [-n] [-m] [-d DB_FILE] [-r RES]
+                [-p] [-top TOP] [-thr THR] [-fs FONTSIZE] [-ls LABELSIZE]
+                [-lw LABELWIDTH] [-bm BRANCHMARGIN] [-lsep LEAF_SEP]
+                [-fh FIGHEIGHT] [-fw FIGWIDTH] [-nm] [-o OUTPUT_PATH]
+                [-dt HIGHLIGHT_DIFFERENCES_THRESHOLD] [-c CONTRAST]
+                taxonomic_rank
+         
 ###
