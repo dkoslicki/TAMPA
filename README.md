@@ -57,6 +57,7 @@ python src/tampa.py
 The options are as follows:
 
 ```bash
+
 usage: tampa.py [-h] [-i INPUT_PROFILE] [-i1 INPUT_PROFILE1]
                 [-g GROUND_TRUTH_INPUT_PROFILE] [-b OUTPUT_BASE_NAME]
                 [-t FILE_TYPE] [-s SAMPLE_OF_INTEREST] [-k SCALING]
@@ -65,7 +66,83 @@ usage: tampa.py [-h] [-i INPUT_PROFILE] [-i1 INPUT_PROFILE1]
                 [-lw LABELWIDTH] [-bm BRANCHMARGIN] [-lsep LEAF_SEP]
                 [-fh FIGHEIGHT] [-fw FIGWIDTH] [-nm] [-o OUTPUT_PATH]
                 [-dt HIGHLIGHT_DIFFERENCES_THRESHOLD] [-c CONTRAST]
+                [-fir INPUT1] [-sec INPUT2]
                 taxonomic_rank
+
+Plot abundance of profile against ground truth on taxonomic tree.
+
+positional arguments:
+  taxonomic_rank        Taxonomic rank to do the plotting at
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT_PROFILE, --input_profile INPUT_PROFILE
+                        Input taxonomic profile
+  -i1 INPUT_PROFILE1, --input_profile1 INPUT_PROFILE1
+                        Second (optional) input taxonomic profile1
+  -g GROUND_TRUTH_INPUT_PROFILE, --ground_truth_input_profile GROUND_TRUTH_INPUT_PROFILE
+                        Input ground truth taxonoomic profile
+  -b OUTPUT_BASE_NAME, --output_base_name OUTPUT_BASE_NAME
+                        Base name for output
+  -t FILE_TYPE, --file_type FILE_TYPE
+                        File type for output images (svg, png, pdf, etc.
+  -s SAMPLE_OF_INTEREST, --sample_of_interest SAMPLE_OF_INTEREST
+                        If you're only interested in a single sample of
+                        interest, specify here.
+  -k SCALING, --scaling SCALING
+                        Plot scaling (log, sqrt, power etc.
+  -a LABELS, --labels LABELS
+                        Specify this otion if you want to add labels to the
+                        graph (All, Leaf, None)
+  -y LAYOUT, --layout LAYOUT
+                        Chose the layout of the graph (Pie, Bar, Circle,
+                        Rectangle
+  -l, --plot_l1         If you also want to plot the L1 error
+  -n, --normalize       specify this option if you want to normalize the node
+                        weights/relative abundances so that they sum to one
+  -m, --merge           specify this option if you to average over all the
+                        @SampleID's and plot a single tree
+  -d DB_FILE, --db_file DB_FILE
+                        specify database dump file
+  -r RES, --res RES     specify the resolution (dpi)
+  -p, --profile         specify this option to use only the input profile(s)
+                        taxID's to construct the tree
+  -top TOP, --top TOP   specify this option to display only the top nodes with
+                        highest abundance
+  -thr THR, --thr THR   specify this option to display only the nodes with
+                        abundance higher than threshold
+  -fs FONTSIZE, --fontsize FONTSIZE
+                        specify this option to change the font size of the
+                        labels
+  -ls LABELSIZE, --labelsize LABELSIZE
+                        specify this option to display only the nodes with
+                        abundance higher than threshold
+  -lw LABELWIDTH, --labelwidth LABELWIDTH
+                        specify this option to display only the nodes with
+                        abundance higher than threshold
+  -bm BRANCHMARGIN, --branchmargin BRANCHMARGIN
+                        specify this option to change the branch vertical
+                        margin
+  -lsep LEAF_SEP, --leaf_sep LEAF_SEP
+                        specify this option to change the leaf separation
+  -fh FIGHEIGHT, --figheight FIGHEIGHT
+                        specify this option to change the figure height (in)
+  -fw FIGWIDTH, --figwidth FIGWIDTH
+                        specify this option to change the figure width (in)
+  -nm, --no_monitor     If you are running on a server or other monitor-less
+                        environment, use this flag to save directly to a file
+  -o OUTPUT_PATH, --output_path OUTPUT_PATH
+                        Output path
+  -dt HIGHLIGHT_DIFFERENCES_THRESHOLD, --highlight_differences_threshold HIGHLIGHT_DIFFERENCES_THRESHOLD
+                        If at any rank the two input samples have a difference
+                        in abundance greater than or equal to N percent, this
+                        taxa will be highlighted
+  -c CONTRAST, --contrast CONTRAST
+                        contrast mode for comparison with gold standard
+  -fir INPUT1, --input1 INPUT1
+                        Name of the first input
+  -sec INPUT2, --input2 INPUT2
+                        Name of the second input
 ```
 ### Options to condense visualization in case of large datasets
 
