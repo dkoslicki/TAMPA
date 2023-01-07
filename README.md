@@ -56,6 +56,7 @@ python src/tampa.py
 ```
 The options are as follows:
 
+```bash
 usage: tampa.py [-h] [-i INPUT_PROFILE] [-i1 INPUT_PROFILE1]
                 [-g GROUND_TRUTH_INPUT_PROFILE] [-b OUTPUT_BASE_NAME]
                 [-t FILE_TYPE] [-s SAMPLE_OF_INTEREST] [-k SCALING]
@@ -65,5 +66,5 @@ usage: tampa.py [-h] [-i INPUT_PROFILE] [-i1 INPUT_PROFILE1]
                 [-fh FIGHEIGHT] [-fw FIGWIDTH] [-nm] [-o OUTPUT_PATH]
                 [-dt HIGHLIGHT_DIFFERENCES_THRESHOLD] [-c CONTRAST]
                 taxonomic_rank
-         
+```
 ###
