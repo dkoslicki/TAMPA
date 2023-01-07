@@ -67,4 +67,8 @@ usage: tampa.py [-h] [-i INPUT_PROFILE] [-i1 INPUT_PROFILE1]
                 [-dt HIGHLIGHT_DIFFERENCES_THRESHOLD] [-c CONTRAST]
                 taxonomic_rank
 ```
-###
+### Options to condense visualization in case of large datasets
+
+1. -thr: This option can be used to display only the nodes with abundance higher than a particular threshold
+2. -c: Contrast mode can be used to identify problematic subregions of large trees. In the contrast mode, the false positive taxas are represented as red circles, the false negative taxas as blue circles, true positives as white, and the remaining taxas in a gradient of white to green, with the color intensity proportional to the relative error.
+3. -top: This option can be used to display only the top nodes with highest abundance
