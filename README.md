@@ -10,7 +10,7 @@
 ### Clone the repository
 
 ```bash
-git clone git@github.com:dkoslicki/TAMPA.git
+git clone https://github.com/dkoslicki/TAMPA.git
 cd TAMPA
 ```
 
